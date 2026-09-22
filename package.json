@@ -1,0 +1,14 @@
+{
+  "name": "campuscart-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w apps/web",
+    "dev:mobile": "npm run start -w apps/mobile",
+    "build:packages": "npm run build -w packages/types -w packages/validation -w packages/api-client -w packages/utils"
+  }
+}
