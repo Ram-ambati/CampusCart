@@ -65,16 +65,25 @@ public class ListingService {
         return listingRepository.save(listing);
     }
 
+    @Transactional(readOnly = true)
     public List<Listing> getAllActiveListings() {
         return searchListings(null, null, null, null, null, null, "newest");
     }
 
+    @Transactional(readOnly = true)
     public List<Listing> getActiveListingsByCategory(Category category) {
         return searchListings(category, null, null, null, null, null, "newest");
     }
 
-    public List<Listing> searchListings(Category category, String q, Double minPrice, Double maxPrice, String condition, Integer days, String sort) {
+    @Transactional(readOnly = true)
+    public List<Listing> searchListings(Category category, String q, java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice, String condition, Integer days, String sort) {
         Specification<Listing> spec = (root, query, cb) -> {
+            if (Long.class != query.getResultType() && long.class != query.getResultType()) {
+                root.fetch("seller", jakarta.persistence.criteria.JoinType.LEFT);
+                root.fetch("images", jakarta.persistence.criteria.JoinType.LEFT);
+                query.distinct(true);
+            }
+            
             List<Predicate> predicates = new ArrayList<>();
             
             // Only active listings
@@ -125,11 +134,13 @@ public class ListingService {
         return listingRepository.findAll(spec);
     }
 
+    @Transactional(readOnly = true)
     public Listing getListingById(Long id) {
         return listingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Listing not found"));
     }
 
+    @Transactional(readOnly = true)
     public List<Listing> getListingsBySellerId(Long sellerId) {
         return listingRepository.findBySellerIdOrderByCreatedAtDesc(sellerId);
     }

@@ -39,8 +39,8 @@ public class ListingController {
     @GetMapping
     public ResponseEntity<List<Listing>> getAllActiveListings(
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) java.math.BigDecimal minPrice,
+            @RequestParam(required = false) java.math.BigDecimal maxPrice,
             @RequestParam(required = false) String condition,
             @RequestParam(required = false) Integer days,
             @RequestParam(required = false, defaultValue = "newest") String sort) {
@@ -51,8 +51,8 @@ public class ListingController {
     public ResponseEntity<List<Listing>> getListingsByCategory(
             @PathVariable Category category,
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) java.math.BigDecimal minPrice,
+            @RequestParam(required = false) java.math.BigDecimal maxPrice,
             @RequestParam(required = false) String condition,
             @RequestParam(required = false) Integer days,
             @RequestParam(required = false, defaultValue = "newest") String sort) {
