@@ -46,9 +46,9 @@ public class ListingController {
             @RequestParam(required = false) java.math.BigDecimal maxPrice,
             @RequestParam(required = false) String condition,
             @RequestParam(required = false) Integer days,
-            @RequestParam(required = false, defaultValue = "newest") String sort,
+            @RequestParam(required = false, defaultValue = "newest") String sortBy,
             @PageableDefault(size = 12) Pageable pageable) {
-        return ResponseEntity.ok(listingService.searchListings(null, q, minPrice, maxPrice, condition, days, sort, pageable));
+        return ResponseEntity.ok(listingService.searchListings(null, q, minPrice, maxPrice, condition, days, sortBy, pageable));
     }
 
     @GetMapping("/category/{category}")
@@ -59,9 +59,9 @@ public class ListingController {
             @RequestParam(required = false) java.math.BigDecimal maxPrice,
             @RequestParam(required = false) String condition,
             @RequestParam(required = false) Integer days,
-            @RequestParam(required = false, defaultValue = "newest") String sort,
+            @RequestParam(required = false, defaultValue = "newest") String sortBy,
             @PageableDefault(size = 12) Pageable pageable) {
-        return ResponseEntity.ok(listingService.searchListings(category, q, minPrice, maxPrice, condition, days, sort, pageable));
+        return ResponseEntity.ok(listingService.searchListings(category, q, minPrice, maxPrice, condition, days, sortBy, pageable));
     }
 
     @GetMapping("/{id}")

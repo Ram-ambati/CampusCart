@@ -79,7 +79,7 @@ export default function Marketplace() {
       if (maxPrice) params.append('maxPrice', maxPrice);
       if (condition) params.append('condition', condition);
       if (dateListed) params.append('days', dateListed);
-      if (sortBy) params.append('sort', sortBy);
+      if (sortBy) params.append('sortBy', sortBy);
       params.append('page', pageParam.toString());
       params.append('size', '12');
 
