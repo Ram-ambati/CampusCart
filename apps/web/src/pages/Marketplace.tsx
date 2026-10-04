@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import type { Listing } from '@campuscart/types';
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -11,17 +12,6 @@ function useDebounce<T>(value: T, delay: number): T {
     return () => clearTimeout(handler);
   }, [value, delay]);
   return debouncedValue;
-}
-
-interface Listing {
-  id: number;
-  title: string;
-  price: number;
-  itemCondition: string;
-  category: string;
-  images: { imageUrl: string }[];
-  seller: { preferredName: string; realName: string };
-  createdAt: string;
 }
 
 export default function Marketplace() {
@@ -36,7 +26,7 @@ export default function Marketplace() {
   const [dateListed, setDateListed] = useState('');
   const [sortBy, setSortBy] = useState('newest');
 
-  const { data: listings = [], isLoading: loading } = useQuery({
+  const { data: listings = [], isLoading: loading } = useQuery<Listing[]>({
     queryKey: ['listings', category || 'all', debouncedSearch, minPrice, maxPrice, condition, dateListed, sortBy],
     queryFn: async () => {
       const token = localStorage.getItem('jwt');

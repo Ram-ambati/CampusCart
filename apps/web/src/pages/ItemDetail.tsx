@@ -1,17 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-interface Listing {
-  id: number;
-  title: string;
-  price: number;
-  itemCondition: string;
-  category: string;
-  description: string;
-  images: { imageUrl: string }[];
-  seller: { preferredName: string; realName: string; avatarUrl: string; email: string };
-  createdAt: string;
-}
+import type { Listing } from '@campuscart/types';
 
 export default function ItemDetail() {
   const { id } = useParams();
