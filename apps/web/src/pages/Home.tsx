@@ -12,7 +12,8 @@ export default function Home() {
       return;
     }
 
-    fetch('http://localhost:8080/api/auth/me', {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    fetch(`${API_URL}/api/auth/me`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => res.json())

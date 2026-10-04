@@ -19,10 +19,12 @@ export default function ItemDetail() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("Hi! Is this still available?");
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('jwt');
-    fetch(`http://localhost:8080/api/listings/${id}`, {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    fetch(`${API_URL}/api/listings/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => {
@@ -75,7 +77,7 @@ export default function ItemDetail() {
         <div className="w-full lg:w-3/5">
           <div className="bg-slate-100 rounded-3xl overflow-hidden border border-slate-200/60 flex items-center justify-center aspect-[4/3] relative">
              {listing.images && listing.images.length > 0 ? (
-                <img src={listing.images[0].imageUrl} alt={listing.title} className="w-full h-full object-cover" />
+                <img src={listing.images[selectedImageIndex]?.imageUrl || listing.images[0].imageUrl} alt={listing.title} className="w-full h-full object-cover transition-opacity duration-300" />
              ) : (
                 <div className="text-slate-400 flex flex-col items-center">
                   <svg className="w-12 h-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -87,7 +89,11 @@ export default function ItemDetail() {
           {listing.images && listing.images.length > 1 && (
             <div className="flex gap-4 mt-4 overflow-x-auto pb-2">
               {listing.images.map((img, idx) => (
-                <div key={idx} className="w-24 h-24 shrink-0 rounded-xl overflow-hidden border border-slate-200 cursor-pointer hover:opacity-80 transition-opacity">
+                <div 
+                  key={idx} 
+                  onClick={() => setSelectedImageIndex(idx)}
+                  className={`w-24 h-24 shrink-0 rounded-xl overflow-hidden cursor-pointer transition-all ${selectedImageIndex === idx ? 'border-4 border-slate-900 shadow-md scale-[1.02]' : 'border-2 border-slate-200 hover:opacity-80'}`}
+                >
                   <img src={img.imageUrl} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
                 </div>
               ))}
@@ -99,7 +105,7 @@ export default function ItemDetail() {
         <div className="w-full lg:w-2/5 flex flex-col">
           <div className="mb-6">
             <h1 className="text-3xl font-extrabold text-slate-900 mb-2">{listing.title}</h1>
-            <p className="text-4xl font-black text-slate-900 mb-6">${listing.price.toFixed(2)}</p>
+            <p className="text-4xl font-black text-slate-900 mb-6">₹{listing.price.toFixed(2)}</p>
             
             <div className="flex gap-3 mb-8">
               <span className="px-4 py-1.5 bg-slate-200 text-slate-800 text-sm font-bold rounded-full capitalize">{listing.itemCondition.toLowerCase().replace('_', ' ')}</span>
@@ -114,8 +120,8 @@ export default function ItemDetail() {
             <h3 className="text-lg font-bold text-slate-900 mb-4">About the Seller</h3>
             <div className="flex items-center gap-4 mb-6">
               <div className="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden shrink-0 border border-slate-300">
-                 {listing.seller?.avatarUrl ? (
-                   <img src={listing.seller.avatarUrl} alt="Seller Avatar" className="w-full h-full object-cover" />
+               {listing.seller?.avatarUrl ? (
+                   <img src={listing.seller.avatarUrl} alt="Seller Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                  ) : (
                    <span className="text-slate-500 font-bold text-xl">{(listing.seller?.preferredName || listing.seller?.realName || "U")[0]}</span>
                  )}

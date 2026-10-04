@@ -14,7 +14,8 @@ export default function Onboarding() {
     e.preventDefault();
     const token = localStorage.getItem('jwt');
     
-    fetch('http://localhost:8080/api/auth/onboard', {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    fetch(`${API_URL}/api/auth/onboard`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

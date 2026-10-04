@@ -26,7 +26,8 @@ export default function UserProfile() {
 
     if (isOwnProfile) {
       // Fetch our own profile
-      fetch('http://localhost:8080/api/auth/me', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      fetch(`${API_URL}/api/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -37,7 +38,8 @@ export default function UserProfile() {
       .catch(console.error);
     } else {
       // Fetch another user's profile
-      fetch(`http://localhost:8080/api/users/${userId}`, {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      fetch(`${API_URL}/api/users/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -52,7 +54,8 @@ export default function UserProfile() {
   const handleSave = async () => {
     const token = localStorage.getItem('jwt');
     try {
-      const res = await fetch('http://localhost:8080/api/users/me/about', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const res = await fetch(`${API_URL}/api/users/me/about`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -92,7 +95,7 @@ export default function UserProfile() {
         <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200 shadow-sm flex flex-col md:flex-row gap-8 items-start">
           <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-slate-100 overflow-hidden shrink-0 border-4 border-white shadow-md flex items-center justify-center">
             {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
               <span className="text-5xl font-extrabold text-slate-300">{user.realName.charAt(0)}</span>
             )}

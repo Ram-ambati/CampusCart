@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 interface Listing {
   id: number;
@@ -13,32 +13,38 @@ interface Listing {
 }
 
 export default function Marketplace() {
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
   const { id: category } = useParams();
 
-  useEffect(() => {
-    setLoading(true);
-    const token = localStorage.getItem('jwt');
-    const endpoint = category 
-      ? `http://localhost:8080/api/listings/category/${category}`
-      : 'http://localhost:8080/api/listings';
+  const { data: listings = [], isLoading: loading } = useQuery({
+    queryKey: ['listings', category || 'all'],
+    queryFn: async () => {
+      const token = localStorage.getItem('jwt');
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const endpoint = category 
+        ? `${baseUrl}/api/listings/category/${category}`
+        : `${baseUrl}/api/listings`;
 
-    fetch(endpoint, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (Array.isArray(data)) setListings(data);
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error(err);
-      setLoading(false);
-    });
-  }, [category]);
+      const res = await fetch(endpoint, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch listings');
+      return res.json();
+    }
+  });
+
+  const { data: user } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const token = localStorage.getItem('jwt');
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const res = await fetch(`${baseUrl}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch user');
+      return res.json();
+    }
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -46,7 +52,7 @@ export default function Marketplace() {
       <nav className="sticky top-0 w-full bg-white border-b border-slate-200 z-50 px-6 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
           <div 
-            onClick={() => navigate('/')} 
+            onClick={() => navigate('/marketplace')} 
             className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center cursor-pointer"
           >
              <span className="text-white font-bold text-xl">C</span>
@@ -77,13 +83,17 @@ export default function Marketplace() {
              <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
           </div>
           <div 
-            className="w-10 h-10 bg-slate-200 rounded-full cursor-pointer hover:bg-slate-300 transition-colors flex items-center justify-center" 
+            className="w-10 h-10 bg-slate-200 rounded-full cursor-pointer hover:bg-slate-300 transition-colors flex items-center justify-center overflow-hidden border border-slate-300" 
             onClick={() => navigate('/profile/edit')}
             title="Your Profile"
           >
-            <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            )}
           </div>
         </div>
       </nav>
@@ -139,7 +149,7 @@ export default function Marketplace() {
                       </div>
                     )}
                   </div>
-                  <h3 className="font-extrabold text-lg text-slate-900 leading-tight mb-1">${item.price}</h3>
+                  <h3 className="font-extrabold text-lg text-slate-900 leading-tight mb-1">₹{item.price}</h3>
                   <p className="text-slate-700 font-medium truncate mb-1">{item.title}</p>
                   <p className="text-slate-400 text-xs font-medium">{item.seller?.preferredName || item.seller?.realName}</p>
                 </div>

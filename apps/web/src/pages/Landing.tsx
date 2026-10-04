@@ -13,7 +13,8 @@ export default function Landing() {
       localStorage.setItem('jwt', token);
       window.history.replaceState({}, document.title, "/");
       
-      fetch('http://localhost:8080/api/auth/me', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      fetch(`${API_URL}/api/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -21,15 +22,21 @@ export default function Landing() {
         if (!user.onboardingCompleted) {
           navigate('/onboarding');
         } else {
-          navigate('/home');
+          navigate('/marketplace');
         }
       })
       .catch(err => console.error(err));
+    } else {
+      const existingToken = localStorage.getItem('jwt');
+      if (existingToken) {
+        navigate('/marketplace');
+      }
     }
   }, [navigate, location]);
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    window.location.href = `${API_URL}/oauth2/authorization/google`;
   };
 
   return (
@@ -37,7 +44,11 @@ export default function Landing() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
         <div className="flex justify-between items-center px-6 py-4 max-w-6xl mx-auto">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
+            if (localStorage.getItem('jwt')) {
+              navigate('/marketplace');
+            }
+          }}>
             <div className="w-8 h-8 bg-slate-900 rounded-md flex items-center justify-center shadow-sm">
               <span className="text-xl font-bold text-white">C</span>
             </div>
