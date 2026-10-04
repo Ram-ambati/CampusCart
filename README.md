@@ -1,6 +1,5 @@
 <div align="center">
-  <img src="docs/images/logo.svg" alt="CampusCart Logo" width="500" height="120" />
-  <h1>CampusCart</h1>
+  <img src="docs/images/logo.svg" alt="CampusCart Logo" width="600" height="120" />
   <p>Your Campus. Your Marketplace.</p>
 </div>
 
