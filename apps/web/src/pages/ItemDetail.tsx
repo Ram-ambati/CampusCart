@@ -66,7 +66,12 @@ export default function ItemDetail() {
         <div className="w-full lg:w-3/5">
           <div className="bg-slate-100 rounded-3xl overflow-hidden border border-slate-200/60 flex items-center justify-center aspect-[4/3] relative">
              {listing.images && listing.images.length > 0 ? (
-                <img src={listing.images[selectedImageIndex]?.imageUrl || listing.images[0].imageUrl} alt={listing.title} className="w-full h-full object-cover transition-opacity duration-300" />
+                <img 
+                  src={listing.images[selectedImageIndex]?.imageUrl || listing.images[0].imageUrl} 
+                  alt={listing.title} 
+                  className="w-full h-full object-cover transition-opacity duration-300" 
+                  onError={(e) => { e.currentTarget.src = 'https://placehold.co/800x600/e2e8f0/475569?text=No+Image'; }}
+                />
              ) : (
                 <div className="text-slate-400 flex flex-col items-center">
                   <svg className="w-12 h-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -83,7 +88,12 @@ export default function ItemDetail() {
                   onClick={() => setSelectedImageIndex(idx)}
                   className={`w-24 h-24 shrink-0 rounded-xl overflow-hidden cursor-pointer transition-all ${selectedImageIndex === idx ? 'border-4 border-slate-900 shadow-md scale-[1.02]' : 'border-2 border-slate-200 hover:opacity-80'}`}
                 >
-                  <img src={img.imageUrl} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                  <img 
+                    src={img.imageUrl} 
+                    alt={`Thumbnail ${idx}`} 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/200x200/e2e8f0/475569?text=No+Image'; }}
+                  />
                 </div>
               ))}
             </div>
@@ -129,18 +139,37 @@ export default function ItemDetail() {
                    className="w-full bg-transparent resize-none focus:outline-none text-slate-700 px-3 py-2 text-sm font-medium placeholder-slate-400"
                    value={message}
                    onChange={e => setMessage(e.target.value)}
+                   readOnly
                  />
                  <button 
-                    onClick={() => alert("Message sent feature coming soon! (Will integrate with real-time chat socket)")}
+                    onClick={async () => {
+                      try {
+                        const token = localStorage.getItem('jwt');
+                        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+                        const res = await fetch(`${API_URL}/api/chat/session`, {
+                          method: 'POST',
+                          headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` 
+                          },
+                          body: JSON.stringify({ listingId: listing.id })
+                        });
+                        if (!res.ok) throw new Error("Failed to start chat");
+                        const session = await res.json();
+                        navigate(`/marketplace/inbox?session=${session.id}`);
+                      } catch (err) {
+                        alert("Error: " + (err as Error).message);
+                      }
+                    }}
                     className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center shrink-0 hover:bg-slate-800 transition-colors shadow-md ml-2"
                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 transform -rotate-90" fill="currentColor" viewBox="0 0 20 20">
                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                     </svg>
                  </button>
                </div>
             </div>
-            <p className="text-xs text-slate-400 mt-3 text-center font-medium">Messages are sent directly to their campus inbox.</p>
+            <p className="text-xs text-slate-400 mt-3 text-center font-medium">Click to open this conversation in your Inbox.</p>
           </div>
         </div>
       </div>

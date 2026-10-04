@@ -96,7 +96,12 @@ export default function SellerDashboard() {
               <div key={item.id} className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col md:flex-row gap-6 shadow-sm hover:shadow-md transition-shadow">
                 <div className="w-full md:w-48 h-32 bg-slate-100 rounded-xl overflow-hidden shrink-0 cursor-pointer" onClick={() => navigate(`/marketplace/item/${item.id}`)}>
                   {item.images && item.images.length > 0 ? (
-                    <img src={item.images[0].imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                    <img 
+                      src={item.images[0].imageUrl} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => { e.currentTarget.src = 'https://placehold.co/400x400/e2e8f0/475569?text=No+Image'; }}
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-400">No Image</div>
                   )}

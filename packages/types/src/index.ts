@@ -46,3 +46,20 @@ export interface Listing {
 }
 
 export const APP_NAME = "CampusCart";
+
+export interface ChatSession {
+  id: number;
+  listing: Listing;
+  buyer: User;
+  seller: User;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: number;
+  session: ChatSession;
+  sender: User;
+  content: string;
+  timestamp: string;
+}
