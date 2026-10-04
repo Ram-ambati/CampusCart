@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 // ─── Floating Item Icons (SVG - Minimal Monochrome) ───
@@ -56,17 +56,6 @@ const BackpackIcon = () => (
   </svg>
 );
 
-// ─── Live Ticker Data ───
-const tickerItems = [
-  { text: "A textbook was just sold near Block A", time: "2 min ago", emoji: "\u{1F4DA}" },
-  { text: "Wireless earbuds listed in Electronics", time: "5 min ago", emoji: "\u{1F3A7}" },
-  { text: "Lab coat traded near Library Steps", time: "8 min ago", emoji: "\u{1F97C}" },
-  { text: "Calculator bundle sold in Block C", time: "12 min ago", emoji: "\u{1F522}" },
-  { text: "Laptop charger listed by a Senior", time: "15 min ago", emoji: "\u{1F4BB}" },
-  { text: "CS304 textbook wanted on Bounty Board", time: "18 min ago", emoji: "\u{1F3AF}" },
-  { text: "Arduino kit traded for tutoring", time: "22 min ago", emoji: "\u26A1" },
-  { text: "Study lamp sold near Hostel Gate", time: "25 min ago", emoji: "\u{1F4A1}" },
-];
 
 // ─── Feature Cards Data ───
 const features = [
@@ -97,13 +86,6 @@ const features = [
   },
 ];
 
-// ─── Stats Data ───
-const stats = [
-  { value: "100%", label: "Verified Students" },
-  { value: "\u20B90", label: "Platform Fees" },
-  { value: "< 5s", label: "Avg. Response Time" },
-  { value: "24/7", label: "Always Open" },
-];
 
 export default function Landing() {
   const navigate = useNavigate();
