@@ -11,6 +11,7 @@ export default function Inbox() {
   const queryClient = useQueryClient();
   
   const activeSessionId = searchParams.get('session');
+  const messageToSend = searchParams.get('send');
   const [inputMessage, setInputMessage] = useState('');
   const [stompClient, setStompClient] = useState<Client | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -74,6 +75,20 @@ export default function Inbox() {
             // Also invalidate sessions list to update "last active" sorting if needed
             queryClient.invalidateQueries({ queryKey: ['chatSessions'] });
           });
+
+          // If we came from ItemDetail with a message to send, send it automatically
+          if (messageToSend) {
+            client.publish({
+              destination: '/app/chat',
+              body: JSON.stringify({
+                sessionId: Number(activeSessionId),
+                content: messageToSend,
+              }),
+            });
+            // Clean up the URL by removing the 'send' parameter
+            searchParams.delete('send');
+            setSearchParams(searchParams, { replace: true });
+          }
         }
       },
       onStompError: (frame) => {
@@ -87,7 +102,7 @@ export default function Inbox() {
     return () => {
       client.deactivate();
     };
-  }, [activeSessionId, token, queryClient]);
+  }, [activeSessionId, token, queryClient, messageToSend, searchParams, setSearchParams]);
 
   // Send message handler
   const handleSendMessage = async (e: React.FormEvent) => {

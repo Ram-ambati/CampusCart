@@ -183,7 +183,7 @@ export default function ItemDetail() {
                    className="w-full bg-transparent resize-none focus:outline-none text-slate-700 px-3 py-2 text-sm font-medium placeholder-slate-400"
                    value={message}
                    onChange={e => setMessage(e.target.value)}
-                   readOnly
+                   placeholder="Type a message to the seller..."
                  />
                  <button 
                     onClick={async () => {
@@ -200,20 +200,23 @@ export default function ItemDetail() {
                         });
                         if (!res.ok) throw new Error("Failed to start chat");
                         const session = await res.json();
-                        navigate(`/marketplace/inbox?session=${session.id}`);
+                        if (message.trim()) {
+                           navigate(`/marketplace/inbox?session=${session.id}&send=${encodeURIComponent(message.trim())}`);
+                        } else {
+                           navigate(`/marketplace/inbox?session=${session.id}`);
+                        }
                       } catch (err) {
                         alert("Error: " + (err as Error).message);
                       }
                     }}
                     className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center shrink-0 hover:bg-slate-800 transition-colors shadow-md ml-2"
                  >
-                    <svg className="w-5 h-5 transform -rotate-90" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 transform rotate-90" fill="currentColor" viewBox="0 0 20 20">
                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                     </svg>
                  </button>
                </div>
             </div>
-            <p className="text-xs text-slate-400 mt-3 text-center font-medium">Click to open this conversation in your Inbox.</p>
           </div>
         </div>
       </div>
