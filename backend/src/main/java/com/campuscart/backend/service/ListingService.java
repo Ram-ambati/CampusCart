@@ -14,8 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
 
 @Service
 public class ListingService {
@@ -62,11 +66,63 @@ public class ListingService {
     }
 
     public List<Listing> getAllActiveListings() {
-        return listingRepository.findByStatusOrderByCreatedAtDesc(ListingStatus.ACTIVE);
+        return searchListings(null, null, null, null, null, null, "newest");
     }
 
     public List<Listing> getActiveListingsByCategory(Category category) {
-        return listingRepository.findByCategoryAndStatusOrderByCreatedAtDesc(category, ListingStatus.ACTIVE);
+        return searchListings(category, null, null, null, null, null, "newest");
+    }
+
+    public List<Listing> searchListings(Category category, String q, Double minPrice, Double maxPrice, String condition, Integer days, String sort) {
+        Specification<Listing> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            // Only active listings
+            predicates.add(cb.equal(root.get("status"), ListingStatus.ACTIVE));
+            
+            if (category != null) {
+                predicates.add(cb.equal(root.get("category"), category));
+            }
+            
+            if (q != null && !q.trim().isEmpty()) {
+                String pattern = "%" + q.trim().toLowerCase() + "%";
+                Predicate titleMatch = cb.like(cb.lower(root.get("title")), pattern);
+                Predicate descMatch = cb.like(cb.lower(root.get("description")), pattern);
+                predicates.add(cb.or(titleMatch, descMatch));
+            }
+            
+            if (minPrice != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+            }
+            
+            if (maxPrice != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+            }
+            
+            if (condition != null && !condition.trim().isEmpty()) {
+                predicates.add(cb.equal(root.get("itemCondition"), condition));
+            }
+            
+            if (days != null) {
+                LocalDateTime dateThreshold = LocalDateTime.now().minusDays(days);
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), dateThreshold));
+            }
+            
+            // Handle Sorting
+            if ("price_asc".equals(sort)) {
+                query.orderBy(cb.asc(root.get("price")));
+            } else if ("price_desc".equals(sort)) {
+                query.orderBy(cb.desc(root.get("price")));
+            } else if ("oldest".equals(sort)) {
+                query.orderBy(cb.asc(root.get("createdAt")));
+            } else {
+                query.orderBy(cb.desc(root.get("createdAt"))); // default to newest
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        
+        return listingRepository.findAll(spec);
     }
 
     public Listing getListingById(Long id) {
@@ -79,12 +135,12 @@ public class ListingService {
     }
 
     @Transactional
-    public void markAsSold(Long id, String userEmail) {
+    public void updateStatus(Long id, String userEmail, ListingStatus status) {
         Listing listing = getListingById(id);
         if (!listing.getSeller().getEmail().equals(userEmail)) {
             throw new RuntimeException("Unauthorized");
         }
-        listing.setStatus(ListingStatus.SOLD);
+        listing.setStatus(status);
         listingRepository.save(listing);
     }
 

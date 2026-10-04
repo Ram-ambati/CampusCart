@@ -1,5 +1,17 @@
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 interface Listing {
   id: number;
@@ -16,8 +28,16 @@ export default function Marketplace() {
   const navigate = useNavigate();
   const { id: category } = useParams();
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 500);
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [condition, setCondition] = useState('');
+  const [dateListed, setDateListed] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+
   const { data: listings = [], isLoading: loading } = useQuery({
-    queryKey: ['listings', category || 'all'],
+    queryKey: ['listings', category || 'all', debouncedSearch, minPrice, maxPrice, condition, dateListed, sortBy],
     queryFn: async () => {
       const token = localStorage.getItem('jwt');
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -25,7 +45,17 @@ export default function Marketplace() {
         ? `${baseUrl}/api/listings/category/${category}`
         : `${baseUrl}/api/listings`;
 
-      const res = await fetch(endpoint, {
+      const params = new URLSearchParams();
+      if (debouncedSearch) params.append('q', debouncedSearch);
+      if (minPrice) params.append('minPrice', minPrice);
+      if (maxPrice) params.append('maxPrice', maxPrice);
+      if (condition) params.append('condition', condition);
+      if (dateListed) params.append('days', dateListed);
+      if (sortBy) params.append('sort', sortBy);
+
+      const url = params.toString() ? `${endpoint}?${params.toString()}` : endpoint;
+
+      const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch listings');
@@ -64,6 +94,8 @@ export default function Marketplace() {
             <input 
               type="text" 
               placeholder="Search CampusCart..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-full w-64 focus:ring-2 focus:ring-slate-300 focus:outline-none"
             />
           </div>
@@ -121,7 +153,66 @@ export default function Marketplace() {
 
         {/* Feed */}
         <main className="flex-1 pb-20">
-          <h2 className="font-bold text-2xl mb-6 text-slate-900">Today's Picks</h2>
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between mb-6 gap-4">
+            <h2 className="font-bold text-2xl text-slate-900">Today's Picks</h2>
+            
+            {/* Filters & Sort */}
+            <div className="flex flex-wrap items-center gap-3">
+               <select 
+                 value={sortBy} 
+                 onChange={(e) => setSortBy(e.target.value)}
+                 className="bg-white border border-slate-200 text-sm rounded-lg focus:ring-slate-500 focus:border-slate-500 block p-2 cursor-pointer"
+               >
+                 <option value="newest">Newest First</option>
+                 <option value="oldest">Oldest First</option>
+                 <option value="price_asc">Price: Low to High</option>
+                 <option value="price_desc">Price: High to Low</option>
+               </select>
+
+               <select 
+                 value={condition} 
+                 onChange={(e) => setCondition(e.target.value)}
+                 className="bg-white border border-slate-200 text-sm rounded-lg focus:ring-slate-500 focus:border-slate-500 block p-2 cursor-pointer"
+               >
+                 <option value="">Any Condition</option>
+                 <option value="NEW">New</option>
+                 <option value="LIKE_NEW">Like New</option>
+                 <option value="GOOD">Good</option>
+                 <option value="FAIR">Fair</option>
+                 <option value="POOR">Poor</option>
+               </select>
+
+               <select 
+                 value={dateListed} 
+                 onChange={(e) => setDateListed(e.target.value)}
+                 className="bg-white border border-slate-200 text-sm rounded-lg focus:ring-slate-500 focus:border-slate-500 block p-2 cursor-pointer"
+               >
+                 <option value="">Any Time</option>
+                 <option value="1">Last 24 Hours</option>
+                 <option value="7">Last 7 Days</option>
+                 <option value="30">Last 30 Days</option>
+               </select>
+
+               <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-2 py-1">
+                 <span className="text-slate-500 text-sm">₹</span>
+                 <input 
+                   type="number" 
+                   placeholder="Min" 
+                   value={minPrice}
+                   onChange={(e) => setMinPrice(e.target.value)}
+                   className="w-16 p-1 text-sm focus:outline-none"
+                 />
+                 <span className="text-slate-300">-</span>
+                 <input 
+                   type="number" 
+                   placeholder="Max" 
+                   value={maxPrice}
+                   onChange={(e) => setMaxPrice(e.target.value)}
+                   className="w-16 p-1 text-sm focus:outline-none"
+                 />
+               </div>
+            </div>
+          </div>
           
           {loading ? (
              <div className="flex justify-center items-center h-40">

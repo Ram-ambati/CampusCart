@@ -37,13 +37,26 @@ public class ListingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Listing>> getAllActiveListings() {
-        return ResponseEntity.ok(listingService.getAllActiveListings());
+    public ResponseEntity<List<Listing>> getAllActiveListings(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String condition,
+            @RequestParam(required = false) Integer days,
+            @RequestParam(required = false, defaultValue = "newest") String sort) {
+        return ResponseEntity.ok(listingService.searchListings(null, q, minPrice, maxPrice, condition, days, sort));
     }
 
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<Listing>> getListingsByCategory(@PathVariable Category category) {
-        return ResponseEntity.ok(listingService.getActiveListingsByCategory(category));
+    public ResponseEntity<List<Listing>> getListingsByCategory(
+            @PathVariable Category category,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String condition,
+            @RequestParam(required = false) Integer days,
+            @RequestParam(required = false, defaultValue = "newest") String sort) {
+        return ResponseEntity.ok(listingService.searchListings(category, q, minPrice, maxPrice, condition, days, sort));
     }
 
     @GetMapping("/{id}")
@@ -56,9 +69,9 @@ public class ListingController {
         return ResponseEntity.ok(listingService.getListingsBySellerId(sellerId));
     }
 
-    @PostMapping("/{id}/sold")
-    public ResponseEntity<Void> markAsSold(@PathVariable Long id, @AuthenticationPrincipal String email) {
-        listingService.markAsSold(id, email);
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Void> updateStatus(@PathVariable Long id, @RequestParam com.campuscart.backend.model.ListingStatus status, @AuthenticationPrincipal String email) {
+        listingService.updateStatus(id, email, status);
         return ResponseEntity.ok().build();
     }
 
