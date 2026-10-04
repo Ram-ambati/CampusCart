@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Listing } from '@campuscart/types';
 
 export default function ItemDetail() {
@@ -9,6 +10,37 @@ export default function ItemDetail() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("Hi! Is this still available?");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const queryClient = useQueryClient();
+
+  const { data: wishlistIds = [] } = useQuery<number[]>({
+    queryKey: ['wishlistIds'],
+    queryFn: async () => {
+      const token = localStorage.getItem('jwt');
+      if (!token) return [];
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const res = await fetch(`${API_URL}/api/wishlist/ids`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) return [];
+      return res.json();
+    }
+  });
+
+  const toggleWishlist = useMutation({
+    mutationFn: async ({ listingId, isSaved }: { listingId: number, isSaved: boolean }) => {
+      const token = localStorage.getItem('jwt');
+      const method = isSaved ? 'DELETE' : 'POST';
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const res = await fetch(`${API_URL}/api/wishlist/${listingId}`, {
+        method,
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to toggle wishlist');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wishlistIds'] });
+    }
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('jwt');
@@ -77,6 +109,18 @@ export default function ItemDetail() {
                   <svg className="w-12 h-12 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                   <span className="font-medium">No images provided</span>
                 </div>
+             )}
+             
+             {/* Favorite Button */}
+             {listing && (
+               <button 
+                 onClick={() => toggleWishlist.mutate({ listingId: listing.id, isSaved: wishlistIds.includes(listing.id) })}
+                 className="absolute top-4 right-4 p-3 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors z-10"
+               >
+                 <svg className={`w-6 h-6 transition-colors ${wishlistIds.includes(listing.id) ? 'text-red-500 fill-red-500' : 'text-slate-400 fill-transparent'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={wishlistIds.includes(listing.id) ? 0 : 2}>
+                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                 </svg>
+               </button>
              )}
           </div>
           {/* Thumbnails (If any) */}

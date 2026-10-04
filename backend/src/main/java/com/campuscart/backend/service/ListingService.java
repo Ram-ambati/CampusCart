@@ -18,6 +18,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 
@@ -66,17 +68,17 @@ public class ListingService {
     }
 
     @Transactional(readOnly = true)
-    public List<Listing> getAllActiveListings() {
-        return searchListings(null, null, null, null, null, null, "newest");
+    public Page<Listing> getAllActiveListings(Pageable pageable) {
+        return searchListings(null, null, null, null, null, null, "newest", pageable);
     }
 
     @Transactional(readOnly = true)
-    public List<Listing> getActiveListingsByCategory(Category category) {
-        return searchListings(category, null, null, null, null, null, "newest");
+    public Page<Listing> getActiveListingsByCategory(Category category, Pageable pageable) {
+        return searchListings(category, null, null, null, null, null, "newest", pageable);
     }
 
     @Transactional(readOnly = true)
-    public List<Listing> searchListings(Category category, String q, java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice, String condition, Integer days, String sort) {
+    public Page<Listing> searchListings(Category category, String q, java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice, String condition, Integer days, String sort, Pageable pageable) {
         Specification<Listing> spec = (root, query, cb) -> {
             if (Long.class != query.getResultType() && long.class != query.getResultType()) {
                 root.fetch("seller", jakarta.persistence.criteria.JoinType.LEFT);
@@ -131,7 +133,7 @@ public class ListingService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
         
-        return listingRepository.findAll(spec);
+        return listingRepository.findAll(spec, pageable);
     }
 
     @Transactional(readOnly = true)

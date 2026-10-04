@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import type { Listing } from '@campuscart/types';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -26,9 +26,47 @@ export default function Marketplace() {
   const [dateListed, setDateListed] = useState('');
   const [sortBy, setSortBy] = useState('newest');
 
-  const { data: listings = [], isLoading: loading } = useQuery<Listing[]>({
-    queryKey: ['listings', category || 'all', debouncedSearch, minPrice, maxPrice, condition, dateListed, sortBy],
+  const queryClient = useQueryClient();
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+  const { data: wishlistIds = [] } = useQuery<number[]>({
+    queryKey: ['wishlistIds'],
     queryFn: async () => {
+      const token = localStorage.getItem('jwt');
+      if (!token) return [];
+      const res = await fetch(`${baseUrl}/api/wishlist/ids`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) return [];
+      return res.json();
+    }
+  });
+
+  const toggleWishlist = useMutation({
+    mutationFn: async ({ listingId, isSaved }: { listingId: number, isSaved: boolean }) => {
+      const token = localStorage.getItem('jwt');
+      const method = isSaved ? 'DELETE' : 'POST';
+      const res = await fetch(`${baseUrl}/api/wishlist/${listingId}`, {
+        method,
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to toggle wishlist');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wishlistIds'] });
+    }
+  });
+
+  const { 
+    data: listingsData, 
+    isLoading: loading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteQuery({
+    queryKey: ['listings', category || 'all', debouncedSearch, minPrice, maxPrice, condition, dateListed, sortBy],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam = 0 }) => {
       const token = localStorage.getItem('jwt');
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
       const endpoint = category 
@@ -42,6 +80,8 @@ export default function Marketplace() {
       if (condition) params.append('condition', condition);
       if (dateListed) params.append('days', dateListed);
       if (sortBy) params.append('sort', sortBy);
+      params.append('page', pageParam.toString());
+      params.append('size', '12');
 
       const url = params.toString() ? `${endpoint}?${params.toString()}` : endpoint;
 
@@ -50,8 +90,14 @@ export default function Marketplace() {
       });
       if (!res.ok) throw new Error('Failed to fetch listings');
       return res.json();
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.last) return undefined;
+      return allPages.length;
     }
   });
+
+  const listings = listingsData?.pages.flatMap(page => page.content) || [];
 
   const { data: user } = useQuery({
     queryKey: ['me'],
@@ -220,7 +266,7 @@ export default function Marketplace() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
               {listings.map(item => (
                 <div key={item.id} className="group cursor-pointer flex flex-col" onClick={() => navigate(`/marketplace/item/${item.id}`)}>
-                  <div className="aspect-square bg-slate-100 rounded-2xl mb-3 overflow-hidden border border-slate-200/50">
+                  <div className="aspect-square bg-slate-100 rounded-2xl mb-3 overflow-hidden border border-slate-200/50 relative">
                     {item.images && item.images.length > 0 ? (
                       <img 
                         src={item.images[0].imageUrl} 
@@ -234,12 +280,37 @@ export default function Marketplace() {
                         <span className="text-xs font-medium">No Image</span>
                       </div>
                     )}
+                    
+                    {/* Favorite Button */}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleWishlist.mutate({ listingId: item.id, isSaved: wishlistIds.includes(item.id) });
+                      }}
+                      className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors"
+                    >
+                      <svg className={`w-5 h-5 transition-colors ${wishlistIds.includes(item.id) ? 'text-red-500 fill-red-500' : 'text-slate-400 fill-transparent'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={wishlistIds.includes(item.id) ? 0 : 2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                    </button>
                   </div>
                   <h3 className="font-extrabold text-lg text-slate-900 leading-tight mb-1">₹{item.price}</h3>
                   <p className="text-slate-700 font-medium truncate mb-1">{item.title}</p>
                   <p className="text-slate-400 text-xs font-medium">{item.seller?.preferredName || item.seller?.realName}</p>
                 </div>
               ))}
+            </div>
+          )}
+          
+          {hasNextPage && (
+            <div className="flex justify-center mt-8">
+              <button 
+                onClick={() => fetchNextPage()} 
+                disabled={isFetchingNextPage}
+                className="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-full hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50"
+              >
+                {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+              </button>
             </div>
           )}
         </main>

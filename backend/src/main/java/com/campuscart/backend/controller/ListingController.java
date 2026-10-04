@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import java.util.List;
 
 @RestController
@@ -37,26 +40,28 @@ public class ListingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Listing>> getAllActiveListings(
+    public ResponseEntity<Page<Listing>> getAllActiveListings(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) java.math.BigDecimal minPrice,
             @RequestParam(required = false) java.math.BigDecimal maxPrice,
             @RequestParam(required = false) String condition,
             @RequestParam(required = false) Integer days,
-            @RequestParam(required = false, defaultValue = "newest") String sort) {
-        return ResponseEntity.ok(listingService.searchListings(null, q, minPrice, maxPrice, condition, days, sort));
+            @RequestParam(required = false, defaultValue = "newest") String sort,
+            @PageableDefault(size = 12) Pageable pageable) {
+        return ResponseEntity.ok(listingService.searchListings(null, q, minPrice, maxPrice, condition, days, sort, pageable));
     }
 
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<Listing>> getListingsByCategory(
+    public ResponseEntity<Page<Listing>> getListingsByCategory(
             @PathVariable Category category,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) java.math.BigDecimal minPrice,
             @RequestParam(required = false) java.math.BigDecimal maxPrice,
             @RequestParam(required = false) String condition,
             @RequestParam(required = false) Integer days,
-            @RequestParam(required = false, defaultValue = "newest") String sort) {
-        return ResponseEntity.ok(listingService.searchListings(category, q, minPrice, maxPrice, condition, days, sort));
+            @RequestParam(required = false, defaultValue = "newest") String sort,
+            @PageableDefault(size = 12) Pageable pageable) {
+        return ResponseEntity.ok(listingService.searchListings(category, q, minPrice, maxPrice, condition, days, sort, pageable));
     }
 
     @GetMapping("/{id}")

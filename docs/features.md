@@ -78,3 +78,12 @@ Book\).
 ## 10. Graceful Error Handling & Fallbacks
 *   **Image Fallbacks**: If external images fail to load (e.g., deleted Cloudinary assets or expired dummy data), the React UI catches the 404 error using a custom \onError\ handler and gracefully degrades to display clean, stylized placeholders, preventing broken UI elements.
 
+
+## 11. Wishlist / Favorites
+*   **Hearting Items**: Buyers can save listings to their personal wishlist by clicking the heart icon on any listing card or item detail page.
+*   **Real-time State**: Uses React Query mutations and invalidations to instantly reflect the favorite status across the entire app.
+*   **Many-to-Many Mapping**: Handled efficiently in PostgreSQL via a join table (saved_listings).
+
+## 12. Infinite Scroll Pagination
+*   **Cursor/Offset Based Feed**: The main marketplace feed utilizes Spring Data JPA Pageable alongside React Query useInfiniteQuery to fetch listings in chunks (12 items per page), dramatically improving initial load time and saving database bandwidth as the application scales.
+
