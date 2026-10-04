@@ -168,7 +168,7 @@ export default function Marketplace() {
 
       <div className="flex max-w-7xl mx-auto pt-6 px-4 gap-8">
         {/* Sidebar Categories */}
-        <aside className="w-64 hidden lg:block shrink-0">
+        <aside className="w-64 hidden lg:block shrink-0 sticky top-24 self-start">
           <h2 className="font-bold text-lg mb-4 text-slate-900">Categories</h2>
           <ul className="space-y-1 text-slate-600 font-medium text-sm">
             <li 

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/images/logo.png" alt="CampusCart Logo" width="120" height="120" />
+  <img src="docs/images/logo.svg" alt="CampusCart Logo" width="500" height="120" />
   <h1>CampusCart</h1>
   <p>Your Campus. Your Marketplace.</p>
 </div>
@@ -20,7 +20,7 @@
 
 | Item Details & Chat | User Profile & Wishlist |
 |:---:|:---:|
-| ![Item Detail Placeholder](docs/images/item_detail.png) | ![Profile Placeholder](docs/images/profile.png) |
+| ![Item Detail Placeholder](docs/images/item.png) | ![Profile Placeholder](docs/images/profile.png) |
 
 ---
 
