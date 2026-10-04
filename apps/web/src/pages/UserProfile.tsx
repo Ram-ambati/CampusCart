@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import type { Listing } from '@campuscart/types';
 
 interface User {
   id: number;
@@ -16,6 +17,7 @@ export default function UserProfile() {
   const [user, setUser] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editAbout, setEditAbout] = useState("");
+  const [wishlist, setWishlist] = useState<Listing[]>([]);
 
   // Check if we are viewing our own profile based on URL
   const isOwnProfile = !userId || userId === 'me' || window.location.pathname.includes('edit');
@@ -35,6 +37,14 @@ export default function UserProfile() {
         setUser(data);
         setEditAbout(data.about || "");
       })
+      .catch(console.error);
+
+      // Fetch wishlist
+      fetch(`${API_URL}/api/wishlist`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => setWishlist(data))
       .catch(console.error);
     } else {
       // Fetch another user's profile
@@ -135,13 +145,60 @@ export default function UserProfile() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-slate-900 mt-12 mb-6">Active Listings</h2>
-        <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 shadow-sm">
-           <svg className="w-12 h-12 text-slate-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-           </svg>
-           <p className="text-slate-500 font-medium">{isOwnProfile ? "You have no active listings." : "This user has no active listings."}</p>
-        </div>
+        {isOwnProfile ? (
+          <>
+            <h2 className="text-2xl font-bold text-slate-900 mt-12 mb-6">Your Wishlist</h2>
+            {wishlist.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 shadow-sm">
+                 <svg className="w-12 h-12 text-slate-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                 </svg>
+                 <p className="text-slate-500 font-medium">Your wishlist is currently empty.</p>
+                 <button onClick={() => navigate('/marketplace')} className="mt-4 text-slate-900 font-bold hover:underline">Explore Marketplace</button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                {wishlist.map(item => (
+                  <div key={item.id} className="group cursor-pointer flex flex-col" onClick={() => navigate(`/marketplace/item/${item.id}`)}>
+                    <div className="aspect-square bg-slate-100 rounded-2xl mb-3 overflow-hidden border border-slate-200/50 relative">
+                      {item.images && item.images.length > 0 ? (
+                        <img 
+                          src={item.images[0].imageUrl} 
+                          alt={item.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                          onError={(e) => { e.currentTarget.src = 'https://placehold.co/400x400/e2e8f0/475569?text=No+Image'; }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-100">
+                          <svg className="w-8 h-8 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          <span className="text-xs font-medium">No Image</span>
+                        </div>
+                      )}
+                      <div className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-red-500 fill-red-500 z-10">
+                         <svg className="w-5 h-5 fill-red-500" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={0}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                         </svg>
+                      </div>
+                    </div>
+                    <h3 className="font-extrabold text-lg text-slate-900 leading-tight mb-1">₹{item.price}</h3>
+                    <p className="text-slate-700 font-medium truncate mb-1">{item.title}</p>
+                    <p className="text-slate-400 text-xs font-medium">{item.seller?.preferredName || item.seller?.realName}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <h2 className="text-2xl font-bold text-slate-900 mt-12 mb-6">Active Listings</h2>
+            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 shadow-sm">
+               <svg className="w-12 h-12 text-slate-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+               </svg>
+               <p className="text-slate-500 font-medium">This user has no active listings.</p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -4,10 +4,18 @@ import { useNavigate, useLocation } from 'react-router-dom';
 export default function Landing() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const token = urlParams.get('token');
+    const errorParam = urlParams.get('error');
+    
+    if (errorParam) {
+      setErrorMsg(decodeURIComponent(errorParam));
+      // Remove error from URL without reloading
+      window.history.replaceState({}, document.title, "/login");
+    }
 
     if (token) {
       localStorage.setItem('jwt', token);
@@ -82,6 +90,18 @@ export default function Landing() {
         <p className="text-lg md:text-xl text-slate-500 mb-10 max-w-2xl leading-relaxed font-medium">
           Buy, sell, and trade textbooks, electronics, and dorm essentials safely with verified peers. No fees. No middlemen.
         </p>
+
+        {errorMsg && (
+          <div className="mb-8 px-6 py-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl flex items-center gap-3 font-medium text-left max-w-md w-full mx-auto shadow-sm">
+            <svg className="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="font-bold">Authentication Failed</p>
+              <p className="text-sm opacity-90">{errorMsg}</p>
+            </div>
+          </div>
+        )}
 
         <button 
           onClick={handleGoogleLogin}

@@ -2,6 +2,7 @@ package com.campuscart.backend.config;
 
 import com.campuscart.backend.security.CustomOAuth2UserService;
 import com.campuscart.backend.security.JwtAuthenticationFilter;
+import com.campuscart.backend.security.OAuth2AuthenticationFailureHandler;
 import com.campuscart.backend.security.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,7 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler successHandler;
+    private final OAuth2AuthenticationFailureHandler failureHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
@@ -35,6 +37,7 @@ public class SecurityConfig {
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                 .successHandler(successHandler)
+                .failureHandler(failureHandler)
             );
 
         // Add our custom Token based authentication filter
