@@ -10,15 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@campuscart/api-client": "^1.0.0",
-    "@campuscart/types": "^1.0.0",
-    "@campuscart/utils": "^1.0.0",
-    "@campuscart/validation": "^1.0.0",
     "@stomp/stompjs": "^7.3.0",
     "@tanstack/react-query": "^5.104.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4",
+    "serve": "^14.2.4",
     "sockjs-client": "^1.6.1"
   },
   "devDependencies": {

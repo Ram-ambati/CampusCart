@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ChatSession, ChatMessage } from '@campuscart/types';
+import type { ChatSession, ChatMessage } from '../types';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 

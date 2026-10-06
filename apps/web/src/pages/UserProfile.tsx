@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Listing } from '@campuscart/types';
+import type { Listing } from '../types';
 
 interface User {
   id: number;
