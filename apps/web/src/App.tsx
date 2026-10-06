@@ -4,7 +4,6 @@ import Onboarding from './pages/Onboarding';
 import Marketplace from './pages/Marketplace';
 import CreateListing from './pages/CreateListing';
 import SellerDashboard from './pages/SellerDashboard';
-import BuyerDashboard from './pages/BuyerDashboard';
 import Inbox from './pages/Inbox';
 import UserProfile from './pages/UserProfile';
 import ItemDetail from './pages/ItemDetail';
@@ -33,7 +32,6 @@ function App() {
         {/* Dashboards & Creation */}
         <Route path="/marketplace/create" element={<ProtectedRoute><CreateListing /></ProtectedRoute>} />
         <Route path="/marketplace/you/selling" element={<ProtectedRoute><SellerDashboard /></ProtectedRoute>} />
-        <Route path="/marketplace/you/buying" element={<ProtectedRoute><BuyerDashboard /></ProtectedRoute>} />
         
         {/* Inbox */}
         <Route path="/marketplace/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
