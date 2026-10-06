@@ -156,19 +156,19 @@ export default function Marketplace() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/marketplace/create')}
-            className="px-5 py-2 bg-slate-900 text-white text-sm font-semibold rounded-full hover:bg-slate-800 transition-colors shadow-sm"
+            className="px-5 py-2 bg-slate-900 text-white text-sm font-semibold rounded-full hover:bg-slate-800 active:scale-95 transition-all shadow-sm"
           >
             Sell Item
           </button>
           <div 
-            className="w-10 h-10 bg-slate-100 border border-slate-200 rounded-full cursor-pointer hover:bg-slate-200 transition-colors flex items-center justify-center" 
+            className="w-10 h-10 bg-slate-100 border border-slate-200 rounded-full cursor-pointer hover:bg-slate-200 active:scale-90 transition-all flex items-center justify-center" 
             onClick={() => navigate('/marketplace/you/selling')}
             title="Seller Dashboard"
           >
              <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
           </div>
           <div 
-            className="w-10 h-10 bg-slate-200 rounded-full cursor-pointer hover:bg-slate-300 transition-colors flex items-center justify-center overflow-hidden border border-slate-300" 
+            className="w-10 h-10 bg-slate-200 rounded-full cursor-pointer hover:bg-slate-300 active:scale-90 transition-all flex items-center justify-center overflow-hidden border border-slate-300" 
             onClick={() => navigate('/profile/edit')}
             title="Your Profile"
           >
@@ -304,9 +304,9 @@ export default function Marketplace() {
                         e.stopPropagation();
                         toggleWishlist.mutate({ listingId: item.id, isSaved: wishlistIds.includes(item.id) });
                       }}
-                      className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors"
+                      className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm hover:bg-white active:scale-90 transition-all"
                     >
-                      <svg className={`w-5 h-5 transition-colors ${wishlistIds.includes(item.id) ? 'text-red-500 fill-red-500' : 'text-slate-400 fill-transparent'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={wishlistIds.includes(item.id) ? 0 : 2}>
+                      <svg className={`w-5 h-5 transition-all ${wishlistIds.includes(item.id) ? 'text-red-500 fill-red-500 animate-heart-pop' : 'text-slate-400 fill-transparent'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={wishlistIds.includes(item.id) ? 0 : 2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                       </svg>
                     </button>
@@ -324,9 +324,15 @@ export default function Marketplace() {
               <button 
                 onClick={() => fetchNextPage()} 
                 disabled={isFetchingNextPage}
-                className="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-full hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50"
+                className="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-full hover:bg-slate-50 active:scale-95 transition-all shadow-sm disabled:opacity-50 flex items-center gap-2"
               >
-                {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+                {isFetchingNextPage && (
+                  <svg className="animate-spin h-4 w-4 text-slate-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                <span>{isFetchingNextPage ? 'Loading more...' : 'Load More'}</span>
               </button>
             </div>
           )}

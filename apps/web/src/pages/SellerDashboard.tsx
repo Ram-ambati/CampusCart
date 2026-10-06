@@ -73,7 +73,7 @@ export default function SellerDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <nav className="sticky top-0 w-full bg-white border-b border-slate-200 z-50 px-6 py-3 flex items-center shadow-sm">
-        <button onClick={() => navigate('/marketplace')} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors mr-4">
+        <button onClick={() => navigate('/marketplace')} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 active:scale-95 transition-all mr-4">
           <svg className="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>
         <h1 className="font-extrabold text-xl text-slate-900">Your Listings</h1>
@@ -86,7 +86,7 @@ export default function SellerDashboard() {
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm mt-10">
             <h2 className="text-2xl font-bold text-slate-900 mb-2">No active listings</h2>
             <p className="text-slate-500 mb-6">You haven't posted any items yet, or they've all been deleted.</p>
-            <button onClick={() => navigate('/marketplace/create')} className="px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors">
+            <button onClick={() => navigate('/marketplace/create')} className="px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 active:scale-95 transition-all">
               Create a Listing
             </button>
           </div>
@@ -143,9 +143,15 @@ export default function SellerDashboard() {
                         }
                       }}
                       disabled={deleteMutation.isPending}
-                      className="px-4 py-2 bg-red-50 text-red-600 font-bold text-sm rounded-lg hover:bg-red-100 transition-colors ml-auto"
+                      className="px-4 py-2 bg-red-50 text-red-600 font-bold text-sm rounded-lg hover:bg-red-100 active:scale-95 transition-all ml-auto disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      Delete
+                      {deleteMutation.isPending && (deleteMutation.variables as unknown as number) === item.id && (
+                        <svg className="animate-spin h-3.5 w-3.5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      )}
+                      <span>{deleteMutation.isPending && (deleteMutation.variables as unknown as number) === item.id ? 'Deleting...' : 'Delete'}</span>
                     </button>
                   </div>
                 </div>

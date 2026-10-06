@@ -14,6 +14,7 @@ export default function Inbox() {
   const messageToSend = searchParams.get('send');
   const [inputMessage, setInputMessage] = useState('');
   const [stompClient, setStompClient] = useState<Client | null>(null);
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Fetch current user properly
@@ -119,8 +120,9 @@ export default function Inbox() {
   // Send message handler
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputMessage.trim() || !activeSessionId || !stompClient?.connected) return;
+    if (!inputMessage.trim() || !activeSessionId || !stompClient?.connected || isSending) return;
 
+    setIsSending(true);
     try {
       stompClient.publish({
         destination: '/app/chat',
@@ -132,6 +134,8 @@ export default function Inbox() {
       setInputMessage('');
     } catch (err) {
       alert("Failed to send message: " + (err as Error).message);
+    } finally {
+      setTimeout(() => setIsSending(false), 350);
     }
   };
 
@@ -141,7 +145,7 @@ export default function Inbox() {
       <div className="w-1/3 bg-white border-r border-slate-200 flex flex-col h-full z-10">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-xl font-extrabold text-slate-900">Inbox</h2>
-          <button onClick={() => navigate('/marketplace')} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors">
+          <button onClick={() => navigate('/marketplace')} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 active:scale-95 rounded-full transition-all">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -265,10 +269,18 @@ export default function Inbox() {
                 />
                 <button 
                   type="submit" 
-                  disabled={!inputMessage.trim()}
-                  className="bg-indigo-600 text-white rounded-full p-3 w-12 h-12 flex items-center justify-center hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-md"
+                  disabled={!inputMessage.trim() || isSending || !stompClient?.connected}
+                  className="bg-indigo-600 text-white rounded-full p-3 w-12 h-12 flex items-center justify-center hover:bg-indigo-700 active:scale-95 disabled:opacity-40 transition-all shadow-md shrink-0"
+                  title="Send message"
                 >
-                  <svg className="w-5 h-5 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                  <svg 
+                    className={`w-5 h-5 transform ${isSending ? 'animate-plane-takeoff' : 'rotate-90'}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
                 </button>
               </form>
             </div>

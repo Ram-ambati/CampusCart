@@ -9,9 +9,12 @@ export default function Onboarding() {
     branch: '',
     academicYear: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const token = localStorage.getItem('jwt');
     
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -25,12 +28,16 @@ export default function Onboarding() {
     })
     .then(res => {
       if (res.ok) {
-        navigate('/home');
+        navigate('/marketplace');
       } else {
         alert("Failed to save details");
+        setIsSubmitting(false);
       }
     })
-    .catch(err => console.error(err));
+    .catch(err => {
+      console.error(err);
+      setIsSubmitting(false);
+    });
   };
 
   return (
@@ -58,8 +65,18 @@ export default function Onboarding() {
             <input required type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500 outline-none transition" 
                    value={formData.academicYear} onChange={e => setFormData({...formData, academicYear: e.target.value})} />
           </div>
-          <button type="submit" className="w-full bg-blue-600 text-white rounded-lg px-4 py-3 font-medium hover:bg-blue-700 transition-colors mt-6">
-            Complete Setup
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full bg-blue-600 text-white rounded-lg px-4 py-3 font-medium hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-wait mt-6 flex items-center justify-center gap-2"
+          >
+            {isSubmitting && (
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            )}
+            <span>{isSubmitting ? 'Setting up account...' : 'Complete Setup'}</span>
           </button>
         </form>
       </div>

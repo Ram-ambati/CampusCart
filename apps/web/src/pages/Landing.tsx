@@ -153,33 +153,15 @@ export default function Landing() {
   }, []);
 
   const handleGoogleLogin = () => {
+    if (isAuthLoading) return;
     setIsAuthLoading(true);
-    setTimeout(() => {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-      window.location.href = `${API_URL}/oauth2/authorization/google`;
-    }, 400);
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    window.location.href = `${API_URL}/oauth2/authorization/google`;
   };
 
   const addRevealRef = (el: HTMLDivElement | null, index: number) => {
     revealRefs.current[index] = el;
   };
-
-  if (isAuthLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center stagger-children">
-          <div className="w-16 h-16 bg-slate-200 rounded-2xl mx-auto mb-6 skeleton-loading flex items-center justify-center">
-            <span className="text-3xl font-black text-slate-800">C</span>
-          </div>
-          <div className="space-y-3">
-            <div className="h-4 w-48 bg-slate-200 rounded-full mx-auto skeleton-loading"></div>
-            <div className="h-3 w-32 bg-slate-200 rounded-full mx-auto skeleton-loading"></div>
-          </div>
-          <p className="text-slate-500 text-sm mt-8 font-medium">Connecting to Google...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-['Inter',sans-serif] selection:bg-slate-200 overflow-x-hidden">
@@ -199,9 +181,20 @@ export default function Landing() {
           </div>
           <button 
             onClick={handleGoogleLogin}
-            className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors px-4 py-2 rounded-lg hover:bg-slate-100"
+            disabled={isAuthLoading}
+            className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors px-4 py-2 rounded-lg hover:bg-slate-100 active:scale-95 disabled:opacity-60 flex items-center gap-2"
           >
-            Sign In &rarr;
+            {isAuthLoading ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Connecting...</span>
+              </>
+            ) : (
+              <span>Sign In &rarr;</span>
+            )}
           </button>
         </div>
       </nav>
@@ -249,10 +242,23 @@ export default function Landing() {
             <div className="flex flex-col items-start gap-4">
               <button 
                 onClick={handleGoogleLogin}
-                className="flex items-center justify-center gap-3 bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg font-bold shadow-lg shadow-slate-900/10 border border-slate-800 hover:bg-slate-800 hover:scale-[1.02] active:scale-95 transition-all"
+                disabled={isAuthLoading}
+                className="flex items-center justify-center gap-3 bg-slate-900 text-white px-8 py-4 rounded-2xl text-lg font-bold shadow-lg shadow-slate-900/10 border border-slate-800 hover:bg-slate-800 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-85 disabled:cursor-wait"
               >
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                Continue with Google
+                {isAuthLoading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="animate-pulse">Connecting to Google...</span>
+                  </>
+                ) : (
+                  <>
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
+                    <span>Continue with Google</span>
+                  </>
+                )}
               </button>
               <p className="text-slate-400 text-sm font-medium flex items-center gap-2">
                 <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
@@ -384,10 +390,23 @@ export default function Landing() {
           </p>
           <button 
             onClick={handleGoogleLogin}
-            className="inline-flex items-center justify-center gap-3 bg-slate-900 text-white px-10 py-5 rounded-2xl text-lg font-bold shadow-lg shadow-slate-900/10 border border-slate-800 hover:bg-slate-800 hover:scale-[1.02] active:scale-95 transition-all"
+            disabled={isAuthLoading}
+            className="inline-flex items-center justify-center gap-3 bg-slate-900 text-white px-10 py-5 rounded-2xl text-lg font-bold shadow-lg shadow-slate-900/10 border border-slate-800 hover:bg-slate-800 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-85 disabled:cursor-wait"
           >
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-            Get Started Now
+            {isAuthLoading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span className="animate-pulse">Connecting to Google...</span>
+              </>
+            ) : (
+              <>
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
+                <span>Get Started Now</span>
+              </>
+            )}
           </button>
         </div>
       </section>

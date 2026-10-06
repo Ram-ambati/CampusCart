@@ -63,13 +63,16 @@ export default function Users() {
                   <td className="p-4">
                     <button 
                       onClick={() => toggleBan.mutate(user.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs transition-colors ${
+                      disabled={toggleBan.isPending && (toggleBan.variables as unknown as number) === user.id}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs active:scale-95 transition-all disabled:opacity-50 ${
                         user.banned 
                           ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' 
                           : 'bg-red-50 text-red-600 hover:bg-red-100'
                       }`}
                     >
-                      {user.banned ? (
+                      {toggleBan.isPending && (toggleBan.variables as unknown as number) === user.id ? (
+                        <span>Updating...</span>
+                      ) : user.banned ? (
                         <><CheckCircle className="w-3 h-3" /> Unban User</>
                       ) : (
                         <><Ban className="w-3 h-3" /> Ban User</>

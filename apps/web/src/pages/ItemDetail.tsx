@@ -9,6 +9,7 @@ export default function ItemDetail() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("Hi! Is this still available?");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState("");
@@ -86,6 +87,39 @@ export default function ItemDetail() {
     }
   });
 
+  const handleSendMessage = async (msgToSend?: string) => {
+    if (isSendingMessage || !listing) return;
+    const text = (msgToSend !== undefined ? msgToSend : message).trim();
+    if (!text && msgToSend === undefined) return;
+    
+    setIsSendingMessage(true);
+    try {
+      const token = localStorage.getItem('jwt');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const res = await fetch(`${API_URL}/api/chat/session`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ listingId: listing.id })
+      });
+      if (!res.ok) throw new Error("Failed to start chat session");
+      const session = await res.json();
+      
+      setTimeout(() => {
+        if (text) {
+          navigate(`/marketplace/inbox?session=${session.id}&send=${encodeURIComponent(text)}`);
+        } else {
+          navigate(`/marketplace/inbox?session=${session.id}`);
+        }
+      }, 400);
+    } catch (err) {
+      alert("Error starting chat: " + (err as Error).message);
+      setIsSendingMessage(false);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('jwt');
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -159,9 +193,9 @@ export default function ItemDetail() {
              {listing && (
                <button 
                  onClick={() => toggleWishlist.mutate({ listingId: listing.id, isSaved: wishlistIds.includes(listing.id) })}
-                 className="absolute top-4 right-4 p-3 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors z-10"
+                 className="absolute top-4 right-4 p-3 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white active:scale-90 transition-all z-10"
                >
-                 <svg className={`w-6 h-6 transition-colors ${wishlistIds.includes(listing.id) ? 'text-red-500 fill-red-500' : 'text-slate-400 fill-transparent'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={wishlistIds.includes(listing.id) ? 0 : 2}>
+                 <svg className={`w-6 h-6 transition-colors ${wishlistIds.includes(listing.id) ? 'text-red-500 fill-red-500 animate-heart-pop' : 'text-slate-400 fill-transparent hover:text-slate-600'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={wishlistIds.includes(listing.id) ? 0 : 2}>
                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                  </svg>
                </button>
@@ -233,46 +267,59 @@ export default function ItemDetail() {
               </div>
 
               {/* Messaging Box */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-2 shadow-sm focus-within:ring-2 focus-within:ring-slate-900 focus-within:border-transparent transition-all">
-                 <div className="flex items-end">
-                   <textarea 
-                     rows={2}
-                     className="w-full bg-transparent resize-none focus:outline-none text-slate-700 px-3 py-2 text-sm font-medium placeholder-slate-400"
-                     value={message}
-                     onChange={e => setMessage(e.target.value)}
-                     placeholder="Type a message to the seller..."
-                   />
-                   <button 
-                      onClick={async () => {
-                        try {
-                          const token = localStorage.getItem('jwt');
-                          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-                          const res = await fetch(`${API_URL}/api/chat/session`, {
-                            method: 'POST',
-                            headers: { 
-                              'Content-Type': 'application/json',
-                              'Authorization': `Bearer ${token}` 
-                            },
-                            body: JSON.stringify({ listingId: listing.id })
-                          });
-                          if (!res.ok) throw new Error("Failed to start chat");
-                          const session = await res.json();
-                          if (message.trim()) {
-                             navigate(`/marketplace/inbox?session=${session.id}&send=${encodeURIComponent(message.trim())}`);
-                          } else {
-                             navigate(`/marketplace/inbox?session=${session.id}`);
-                          }
-                        } catch (err) {
-                          alert("Error: " + (err as Error).message);
-                        }
-                      }}
-                      className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center shrink-0 hover:bg-slate-800 transition-colors shadow-md ml-2"
-                   >
-                      <svg className="w-5 h-5 transform rotate-90" fill="currentColor" viewBox="0 0 20 20">
-                         <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                      </svg>
-                   </button>
-                 </div>
+              <div>
+                <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Quick Inquiries</p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {[
+                    "👋 Hi! Is this still available?",
+                    "💰 Is the price negotiable?",
+                    "📍 Can we meet at the library?"
+                  ].map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      disabled={isSendingMessage}
+                      onClick={() => setMessage(chip)}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all active:scale-95 disabled:opacity-50 ${
+                        message === chip
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-2 shadow-sm focus-within:ring-2 focus-within:ring-slate-900 focus-within:border-transparent transition-all">
+                  <div className="flex items-end">
+                    <textarea 
+                      rows={2}
+                      disabled={isSendingMessage}
+                      className="w-full bg-transparent resize-none focus:outline-none text-slate-700 px-3 py-2 text-sm font-medium placeholder-slate-400 disabled:opacity-60"
+                      value={message}
+                      onChange={e => setMessage(e.target.value)}
+                      placeholder="Type a message to the seller..."
+                    />
+                    <button 
+                       type="button"
+                       onClick={() => handleSendMessage()}
+                       disabled={isSendingMessage || !message.trim()}
+                       className={`w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center shrink-0 hover:bg-slate-800 active:scale-95 transition-all shadow-md ml-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                         isSendingMessage ? 'bg-indigo-600' : ''
+                       }`}
+                       title="Send message"
+                    >
+                       <svg 
+                         className={`w-5 h-5 transform ${isSendingMessage ? 'animate-plane-takeoff' : 'rotate-90'}`} 
+                         fill="currentColor" 
+                         viewBox="0 0 20 20"
+                       >
+                          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                       </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -295,17 +342,25 @@ export default function ItemDetail() {
             />
             <div className="flex gap-4">
               <button 
+                type="button"
                 onClick={() => setShowReportModal(false)}
-                className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 active:scale-95 transition-all"
               >
                 Cancel
               </button>
               <button 
+                type="button"
                 onClick={() => submitReport.mutate()}
                 disabled={submitReport.isPending || !reportReason.trim()}
-                className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50"
+                className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {submitReport.isPending ? 'Submitting...' : 'Submit'}
+                {submitReport.isPending && (
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                <span>{submitReport.isPending ? 'Submitting...' : 'Submit'}</span>
               </button>
             </div>
           </div>

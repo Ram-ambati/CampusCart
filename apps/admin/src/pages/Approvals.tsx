@@ -71,15 +71,19 @@ export default function Approvals() {
                 <div className="flex gap-2 mt-auto">
                   <button 
                     onClick={() => rejectListing.mutate(listing.id)}
-                    className="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 border border-slate-200"
+                    disabled={rejectListing.isPending || approveListing.isPending}
+                    className="flex-1 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 active:scale-95 transition-all flex items-center justify-center gap-2 border border-slate-200 disabled:opacity-50"
                   >
-                    <X className="w-4 h-4" /> Reject
+                    <X className="w-4 h-4" /> 
+                    <span>{rejectListing.isPending && (rejectListing.variables as unknown as number) === listing.id ? 'Rejecting...' : 'Reject'}</span>
                   </button>
                   <button 
                     onClick={() => approveListing.mutate(listing.id)}
-                    className="flex-1 py-2.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                    disabled={approveListing.isPending || rejectListing.isPending}
+                    className="flex-1 py-2.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
                   >
-                    <Check className="w-4 h-4" /> Approve
+                    <Check className="w-4 h-4" /> 
+                    <span>{approveListing.isPending && (approveListing.variables as unknown as number) === listing.id ? 'Approving...' : 'Approve'}</span>
                   </button>
                 </div>
               </div>
