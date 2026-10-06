@@ -403,3 +403,25 @@ Approves listing, updating its status to `ACTIVE`.
 
 ### `PUT /api/admin/listings/{id}/reject`
 Rejects listing, updating its status to `DELETED`.
+
+---
+
+## 8. Health & Heartbeat (`/api/health`)
+
+Used by Railway health checks, load balancers, and external uptime monitors to keep the backend warm and prevent the database (e.g., Supabase free tier) from pausing.
+
+### `GET /api/health`
+Performs an active database ping and updates the `heartbeat` table.
+
+* **Authentication**: None required (public).
+* **Automated Scheduler**: An internal Spring task automatically pings every 10 minutes to maintain DB pool connectivity.
+* **Response `200 OK`**:
+```json
+{
+  "status": "UP",
+  "database": "CONNECTED",
+  "lastPingAt": "2026-10-07T01:15:00",
+  "pingCount": 42,
+  "serverTime": "2026-10-07T01:15:00.123456"
+}
+```
