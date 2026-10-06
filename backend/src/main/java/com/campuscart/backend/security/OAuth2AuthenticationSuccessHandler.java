@@ -12,16 +12,26 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 
+import com.campuscart.backend.model.User;
+import com.campuscart.backend.repository.UserRepository;
+
 @Component
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider tokenProvider;
+    private final UserRepository userRepository;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
+        
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user != null && user.isBanned()) {
+            getRedirectStrategy().sendRedirect(request, response, "http://localhost:5173/login?error=suspended");
+            return;
+        }
         
         String token = tokenProvider.generateToken(email);
 

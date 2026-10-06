@@ -9,6 +9,14 @@ import Inbox from './pages/Inbox';
 import UserProfile from './pages/UserProfile';
 import ItemDetail from './pages/ItemDetail';
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const token = localStorage.getItem('jwt');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <Router>
@@ -18,21 +26,21 @@ function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         
         {/* Core Marketplace */}
-        <Route path="/marketplace" element={<Marketplace />} />
-        <Route path="/marketplace/category/:id" element={<Marketplace />} />
-        <Route path="/marketplace/item/:id" element={<ItemDetail />} />
+        <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+        <Route path="/marketplace/category/:id" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+        <Route path="/marketplace/item/:id" element={<ProtectedRoute><ItemDetail /></ProtectedRoute>} />
         
         {/* Dashboards & Creation */}
-        <Route path="/marketplace/create" element={<CreateListing />} />
-        <Route path="/marketplace/you/selling" element={<SellerDashboard />} />
-        <Route path="/marketplace/you/buying" element={<BuyerDashboard />} />
+        <Route path="/marketplace/create" element={<ProtectedRoute><CreateListing /></ProtectedRoute>} />
+        <Route path="/marketplace/you/selling" element={<ProtectedRoute><SellerDashboard /></ProtectedRoute>} />
+        <Route path="/marketplace/you/buying" element={<ProtectedRoute><BuyerDashboard /></ProtectedRoute>} />
         
         {/* Inbox */}
-        <Route path="/marketplace/inbox" element={<Inbox />} />
+        <Route path="/marketplace/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
         
         {/* Profiles */}
-        <Route path="/profile/:userId" element={<UserProfile />} />
-        <Route path="/profile/edit" element={<UserProfile />} />
+        <Route path="/profile/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+        <Route path="/profile/edit" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
 
         {/* Legacy redirect for any old /home links */}
         <Route path="/home" element={<Navigate to="/marketplace" replace />} />

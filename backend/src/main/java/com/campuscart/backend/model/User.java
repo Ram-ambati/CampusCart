@@ -49,6 +49,10 @@ public class User {
     @Builder.Default
     private boolean onboardingCompleted = false;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isBanned = false;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
     

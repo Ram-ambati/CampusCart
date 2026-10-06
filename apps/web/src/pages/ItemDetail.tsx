@@ -10,7 +10,22 @@ export default function ItemDetail() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("Hi! Is this still available?");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState("");
   const queryClient = useQueryClient();
+
+  const { data: user } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const token = localStorage.getItem('jwt');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const res = await fetch(`${API_URL}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch user');
+      return res.json();
+    }
+  });
 
   const { data: wishlistIds = [] } = useQuery<number[]>({
     queryKey: ['wishlistIds'],
@@ -39,6 +54,35 @@ export default function ItemDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wishlistIds'] });
+    }
+  });
+
+  const submitReport = useMutation({
+    mutationFn: async () => {
+      if (!listing) return;
+      const token = localStorage.getItem('jwt');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const res = await fetch(`${API_URL}/api/reports`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          targetType: 'LISTING',
+          targetId: listing.id,
+          reason: reportReason
+        })
+      });
+      if (!res.ok) throw new Error('Failed to submit report');
+    },
+    onSuccess: () => {
+      alert("Report submitted successfully. Our team will review it.");
+      setShowReportModal(false);
+      setReportReason("");
+    },
+    onError: () => {
+      alert("Failed to submit report. Please try again.");
     }
   });
 
@@ -157,69 +201,117 @@ export default function ItemDetail() {
             
             <h3 className="text-lg font-bold text-slate-900 mb-2">Description</h3>
             <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">{listing.description}</p>
+            
+            <div className="mt-6 flex justify-end">
+              {(!user || listing.seller?.id !== user.id) && (
+                <button 
+                  onClick={() => setShowReportModal(true)}
+                  className="text-red-500 text-sm font-bold flex items-center gap-1 hover:underline"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>
+                  Report this Listing
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="mt-auto border-t border-slate-200 pt-8">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">About the Seller</h3>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden shrink-0 border border-slate-300">
-               {listing.seller?.avatarUrl ? (
-                   <img src={listing.seller.avatarUrl} alt="Seller Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                 ) : (
-                   <span className="text-slate-500 font-bold text-xl">{(listing.seller?.preferredName || listing.seller?.realName || "U")[0]}</span>
-                 )}
+          {(!user || listing.seller?.id !== user.id) && (
+            <div className="mt-auto border-t border-slate-200 pt-8">
+              <h3 className="text-lg font-bold text-slate-900 mb-4">About the Seller</h3>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden shrink-0 border border-slate-300">
+                 {listing.seller?.avatarUrl ? (
+                     <img src={listing.seller.avatarUrl} alt="Seller Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                   ) : (
+                     <span className="text-slate-500 font-bold text-xl">{(listing.seller?.preferredName || listing.seller?.realName || "U")[0]}</span>
+                   )}
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900 text-lg">{listing.seller?.preferredName || listing.seller?.realName}</p>
+                  <p className="text-slate-500 text-sm">Verified Student • {listing.seller?.email?.split('@')[1]}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-slate-900 text-lg">{listing.seller?.preferredName || listing.seller?.realName}</p>
-                <p className="text-slate-500 text-sm">Verified Student • {listing.seller?.email?.split('@')[1]}</p>
+
+              {/* Messaging Box */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-2 shadow-sm focus-within:ring-2 focus-within:ring-slate-900 focus-within:border-transparent transition-all">
+                 <div className="flex items-end">
+                   <textarea 
+                     rows={2}
+                     className="w-full bg-transparent resize-none focus:outline-none text-slate-700 px-3 py-2 text-sm font-medium placeholder-slate-400"
+                     value={message}
+                     onChange={e => setMessage(e.target.value)}
+                     placeholder="Type a message to the seller..."
+                   />
+                   <button 
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem('jwt');
+                          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+                          const res = await fetch(`${API_URL}/api/chat/session`, {
+                            method: 'POST',
+                            headers: { 
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${token}` 
+                            },
+                            body: JSON.stringify({ listingId: listing.id })
+                          });
+                          if (!res.ok) throw new Error("Failed to start chat");
+                          const session = await res.json();
+                          if (message.trim()) {
+                             navigate(`/marketplace/inbox?session=${session.id}&send=${encodeURIComponent(message.trim())}`);
+                          } else {
+                             navigate(`/marketplace/inbox?session=${session.id}`);
+                          }
+                        } catch (err) {
+                          alert("Error: " + (err as Error).message);
+                        }
+                      }}
+                      className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center shrink-0 hover:bg-slate-800 transition-colors shadow-md ml-2"
+                   >
+                      <svg className="w-5 h-5 transform rotate-90" fill="currentColor" viewBox="0 0 20 20">
+                         <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                      </svg>
+                   </button>
+                 </div>
               </div>
             </div>
+          )}
+        </div>
+      </div>
 
-            {/* Messaging Box */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-2 shadow-sm focus-within:ring-2 focus-within:ring-slate-900 focus-within:border-transparent transition-all">
-               <div className="flex items-end">
-                 <textarea 
-                   rows={2}
-                   className="w-full bg-transparent resize-none focus:outline-none text-slate-700 px-3 py-2 text-sm font-medium placeholder-slate-400"
-                   value={message}
-                   onChange={e => setMessage(e.target.value)}
-                   placeholder="Type a message to the seller..."
-                 />
-                 <button 
-                    onClick={async () => {
-                      try {
-                        const token = localStorage.getItem('jwt');
-                        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-                        const res = await fetch(`${API_URL}/api/chat/session`, {
-                          method: 'POST',
-                          headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}` 
-                          },
-                          body: JSON.stringify({ listingId: listing.id })
-                        });
-                        if (!res.ok) throw new Error("Failed to start chat");
-                        const session = await res.json();
-                        if (message.trim()) {
-                           navigate(`/marketplace/inbox?session=${session.id}&send=${encodeURIComponent(message.trim())}`);
-                        } else {
-                           navigate(`/marketplace/inbox?session=${session.id}`);
-                        }
-                      } catch (err) {
-                        alert("Error: " + (err as Error).message);
-                      }
-                    }}
-                    className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center shrink-0 hover:bg-slate-800 transition-colors shadow-md ml-2"
-                 >
-                    <svg className="w-5 h-5 transform rotate-90" fill="currentColor" viewBox="0 0 20 20">
-                       <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                    </svg>
-                 </button>
-               </div>
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+            <h3 className="text-2xl font-bold text-slate-900 mb-4">Report Listing</h3>
+            <p className="text-slate-500 mb-6 font-medium">Please let us know why you are reporting this listing. False reports may lead to account suspension.</p>
+            <textarea 
+              autoFocus
+              rows={4}
+              value={reportReason}
+              onChange={e => setReportReason(e.target.value)}
+              placeholder="e.g. Inappropriate content, scam, misleading..."
+              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white mb-6 resize-none"
+            />
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setShowReportModal(false)}
+                className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => submitReport.mutate()}
+                disabled={submitReport.isPending || !reportReason.trim()}
+                className="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {submitReport.isPending ? 'Submitting...' : 'Submit'}
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
     </div>
   );
 }

@@ -37,6 +37,11 @@ export default function Marketplace() {
       const res = await fetch(`${baseUrl}/api/wishlist/ids`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.status === 401) {
+        localStorage.removeItem('jwt');
+        navigate('/login');
+        return [];
+      }
       if (!res.ok) return [];
       return res.json();
     }
@@ -88,6 +93,11 @@ export default function Marketplace() {
       const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.status === 401) {
+        localStorage.removeItem('jwt');
+        navigate('/login');
+        throw new Error('Unauthorized');
+      }
       if (!res.ok) throw new Error('Failed to fetch listings');
       return res.json();
     },
@@ -97,7 +107,7 @@ export default function Marketplace() {
     }
   });
 
-  const listings = listingsData?.pages.flatMap(page => page.content) || [];
+  const allListings = listingsData?.pages.flatMap(page => page.content) || [];
 
   const { data: user } = useQuery({
     queryKey: ['me'],
@@ -107,10 +117,17 @@ export default function Marketplace() {
       const res = await fetch(`${baseUrl}/api/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.status === 401) {
+        localStorage.removeItem('jwt');
+        navigate('/login');
+        throw new Error('Unauthorized');
+      }
       if (!res.ok) throw new Error('Failed to fetch user');
       return res.json();
     }
   });
+
+  const listings = allListings.filter(item => !user || item.seller?.id !== user.id);
 
   return (
     <div className="min-h-screen bg-slate-50">

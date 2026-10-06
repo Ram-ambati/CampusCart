@@ -47,7 +47,7 @@ public class ListingService {
                 .itemCondition(request.getItemCondition())
                 .category(request.getCategory())
                 .seller(seller)
-                .status(ListingStatus.ACTIVE)
+                .status(ListingStatus.PENDING)
                 .build();
 
         if (files != null && !files.isEmpty()) {
@@ -153,6 +153,11 @@ public class ListingService {
         if (!listing.getSeller().getEmail().equals(userEmail)) {
             throw new RuntimeException("Unauthorized");
         }
+        
+        if (listing.getStatus() == ListingStatus.PENDING && status == ListingStatus.ACTIVE) {
+            throw new RuntimeException("Cannot bypass admin approval");
+        }
+        
         listing.setStatus(status);
         listingRepository.save(listing);
     }

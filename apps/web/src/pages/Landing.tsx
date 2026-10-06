@@ -100,7 +100,11 @@ export default function Landing() {
     const errorParam = urlParams.get('error');
 
     if (errorParam) {
-      setErrorMsg(decodeURIComponent(errorParam));
+      if (errorParam === 'suspended') {
+        setErrorMsg("Your account has been suspended by an administrator.");
+      } else {
+        setErrorMsg(decodeURIComponent(errorParam));
+      }
       window.history.replaceState({}, document.title, "/login");
     }
 

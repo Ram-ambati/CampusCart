@@ -96,9 +96,20 @@ export default function UserProfile() {
            </button>
            
            {isOwnProfile && !isEditing && (
-             <button onClick={() => setIsEditing(true)} className="px-5 py-2 bg-slate-200 text-slate-900 font-bold rounded-full hover:bg-slate-300 transition-colors">
-               Edit Profile
-             </button>
+             <div className="flex items-center gap-3">
+               <button onClick={() => setIsEditing(true)} className="px-5 py-2 bg-slate-200 text-slate-900 font-bold rounded-full hover:bg-slate-300 transition-colors">
+                 Edit Profile
+               </button>
+               <button 
+                 onClick={() => {
+                   localStorage.removeItem('jwt');
+                   navigate('/login');
+                 }}
+                 className="px-5 py-2 bg-red-50 text-red-600 font-bold rounded-full hover:bg-red-100 transition-colors"
+               >
+                 Log Out
+               </button>
+             </div>
            )}
         </div>
         

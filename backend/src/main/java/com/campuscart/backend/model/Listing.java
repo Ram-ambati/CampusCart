@@ -46,7 +46,7 @@ public class Listing {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private ListingStatus status = ListingStatus.ACTIVE;
+    private ListingStatus status = ListingStatus.PENDING;
 
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

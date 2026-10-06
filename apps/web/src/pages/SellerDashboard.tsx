@@ -120,7 +120,11 @@ export default function SellerDashboard() {
                   </div>
                   
                   <div className="mt-4 flex flex-wrap gap-3">
-                    {item.status !== 'SOLD' && (
+                    {item.status === 'PENDING' ? (
+                      <span className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-500 cursor-not-allowed">
+                        Pending Approval
+                      </span>
+                    ) : item.status !== 'SOLD' && (
                       <select 
                         value={item.status}
                         onChange={(e) => updateStatusMutation.mutate({ id: item.id, status: e.target.value })}
@@ -128,7 +132,6 @@ export default function SellerDashboard() {
                         className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none hover:bg-slate-100 transition-colors cursor-pointer"
                       >
                         <option value="ACTIVE">Mark Active</option>
-                        <option value="PENDING">Mark Pending</option>
                         <option value="SOLD">Mark Sold</option>
                       </select>
                     )}

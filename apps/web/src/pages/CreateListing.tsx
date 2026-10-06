@@ -71,6 +71,7 @@ export default function CreateListing() {
       });
 
       if (res.ok) {
+        alert("Success! Your listing is pending admin approval. It will appear on the marketplace once approved.");
         navigate('/marketplace/you/selling');
       } else {
         alert("Failed to create listing.");
@@ -87,7 +88,7 @@ export default function CreateListing() {
     <div className="min-h-screen bg-slate-50 flex justify-center py-12 px-4 selection:bg-slate-200">
       <div className="max-w-2xl w-full bg-white rounded-3xl shadow-sm border border-slate-200 p-8 md:p-10">
         <div className="flex items-center gap-4 mb-10">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors">
+          <button type="button" onClick={() => navigate(-1)} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors">
             <svg className="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
           <h1 className="text-3xl font-extrabold text-slate-900">List an Item</h1>
@@ -211,6 +212,7 @@ export default function CreateListing() {
           </div>
 
           <div className="pt-4">
+            <p className="text-xs text-slate-500 mb-4 text-center font-medium">By publishing, you agree to our community guidelines. All listings are subject to admin approval.</p>
             <button 
               type="submit" 
               disabled={isSubmitting}

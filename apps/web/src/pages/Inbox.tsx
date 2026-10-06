@@ -16,8 +16,20 @@ export default function Inbox() {
   const [stompClient, setStompClient] = useState<Client | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Fetch current user from localStorage
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  // Fetch current user properly
+  const { data: currentUser } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const token = localStorage.getItem('jwt');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const res = await fetch(`${API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch user');
+      return res.json();
+    }
+  });
+
   const token = localStorage.getItem('jwt');
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
@@ -141,7 +153,7 @@ export default function Inbox() {
             <div className="p-8 text-center text-slate-400 font-medium">No conversations yet.</div>
           ) : (
             sessions.map((session) => {
-              const otherUser = session.buyer.id === currentUser.id ? session.seller : session.buyer;
+              const otherUser = session.buyer.id === currentUser?.id ? session.seller : session.buyer;
               const isActive = session.id.toString() === activeSessionId;
               
               return (
@@ -210,13 +222,27 @@ export default function Inbox() {
                   No messages yet. Send a message to start negotiating!
                 </div>
               ) : (
-                messages.map((msg) => {
-                  const isMe = msg.sender.id === currentUser.id;
+                messages.map((msg, idx) => {
+                  const isMe = msg.sender.id === currentUser?.id;
+                  
+                  // Show avatar only if it's the first message or the previous message was from a different sender
+                  const showAvatar = idx === 0 || messages[idx - 1].sender.id !== msg.sender.id;
+
                   return (
-                    <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end`}>
+                      {/* Avatar */}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0 bg-slate-200 ${showAvatar ? 'opacity-100' : 'opacity-0'}`}>
+                        {msg.sender.avatarUrl ? (
+                          <img src={msg.sender.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-slate-500 font-bold text-xs">{(msg.sender.preferredName || msg.sender.realName || "U")[0]}</span>
+                        )}
+                      </div>
+                      
+                      {/* Bubble */}
                       <div className={`max-w-[70%] px-5 py-3 rounded-2xl ${isMe ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm'}`}>
                         <p className="text-[15px] leading-relaxed">{msg.content}</p>
-                        <p className={`text-[10px] mt-1 text-right ${isMe ? 'text-indigo-200' : 'text-slate-400'}`}>
+                        <p className={`text-[10px] mt-1 ${isMe ? 'text-indigo-200 text-right' : 'text-slate-400 text-left'}`}>
                           {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>

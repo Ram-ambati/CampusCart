@@ -1,122 +1,89 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { LayoutDashboard, CheckSquare, Flag, Users as UsersIcon, LogOut } from 'lucide-react';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Approvals from './pages/Approvals';
+import Reports from './pages/Reports';
+import Users from './pages/Users';
 
-function App() {
-  const [count, setCount] = useState(0)
+const queryClient = new QueryClient();
+
+function Sidebar() {
+  const location = useLocation();
+  const navItems = [
+    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Approvals', path: '/approvals', icon: CheckSquare },
+    { name: 'Reports', path: '/reports', icon: Flag },
+    { name: 'Users', path: '/users', icon: UsersIcon },
+  ];
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="w-64 bg-slate-900 text-white min-h-screen p-4 flex flex-col">
+      <div className="flex items-center gap-3 mb-10 px-2 mt-4">
+        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-md">
+          <span className="text-xl font-black text-slate-900">A</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        <span className="text-xl font-bold tracking-tight">Admin Console</span>
+      </div>
+      
+      <nav className="flex-1 space-y-2">
+        {navItems.map((item) => (
+          <Link
+            key={item.name}
+            to={item.path}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${
+              location.pathname === item.path ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <item.icon className="w-5 h-5" />
+            {item.name}
+          </Link>
+        ))}
+      </nav>
+      
+      <button 
+        onClick={() => {
+          localStorage.removeItem('jwt');
+          window.location.href = '/login';
+        }}
+        className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-xl transition-colors font-medium mt-auto"
+      >
+        <LogOut className="w-5 h-5" />
+        Sign Out
+      </button>
+    </div>
+  );
 }
 
-export default App
+function Layout({ children }: { children: React.ReactNode }) {
+  const token = localStorage.getItem('jwt');
+  if (!token) return <Navigate to="/login" replace />;
+
+  return (
+    <div className="flex min-h-screen bg-slate-50 font-sans">
+      <Sidebar />
+      <main className="flex-1 p-8 overflow-y-auto h-screen">
+        {children}
+      </main>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/approvals" element={<Layout><Approvals /></Layout>} />
+          <Route path="/reports" element={<Layout><Reports /></Layout>} />
+          <Route path="/users" element={<Layout><Users /></Layout>} />
+        </Routes>
+      </Router>
+    </QueryClientProvider>
+  );
+}
+
+export default App;

@@ -19,13 +19,28 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
-    @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
         String errorMessage = exception.getLocalizedMessage();
-        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/login")
+        String targetUrl = frontendUrl + "/login";
+
+        // Check if this was a mobile or admin app login request
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("mobile_redirect_uri".equals(cookie.getName())) {
+                    targetUrl = java.net.URLDecoder.decode(cookie.getValue(), java.nio.charset.StandardCharsets.UTF_8);
+                    // Clear the cookie
+                    cookie.setMaxAge(0);
+                    cookie.setPath("/");
+                    response.addCookie(cookie);
+                    break;
+                }
+            }
+        }
+
+        String finalUrl = UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("error", URLEncoder.encode(errorMessage, StandardCharsets.UTF_8))
                 .build().toUriString();
 
-        getRedirectStrategy().sendRedirect(request, response, targetUrl);
+        getRedirectStrategy().sendRedirect(request, response, finalUrl);
     }
 }
