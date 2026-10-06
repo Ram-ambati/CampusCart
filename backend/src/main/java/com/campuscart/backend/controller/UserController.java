@@ -3,9 +3,11 @@ package com.campuscart.backend.controller;
 import com.campuscart.backend.model.User;
 import com.campuscart.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -24,16 +26,24 @@ public class UserController {
     }
 
     @PutMapping("/me/about")
-    public ResponseEntity<User> updateAbout(Authentication authentication, @RequestBody Map<String, String> payload) {
+    public ResponseEntity<User> updateAbout(Authentication authentication, @RequestBody(required = false) Map<String, String> payload) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(401).build();
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
 
         String email = (String) authentication.getPrincipal();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        user.setAbout(payload.get("about"));
+        String about = payload != null ? payload.get("about") : null;
+        if (about != null) {
+            about = about.trim();
+            if (about.length() > 500) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "About section cannot exceed 500 characters");
+            }
+        }
+
+        user.setAbout(about);
         return ResponseEntity.ok(userRepository.save(user));
     }
 }

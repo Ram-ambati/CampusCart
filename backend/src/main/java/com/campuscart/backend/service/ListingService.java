@@ -9,9 +9,11 @@ import com.campuscart.backend.model.User;
 import com.campuscart.backend.repository.ListingRepository;
 import com.campuscart.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -38,7 +40,21 @@ public class ListingService {
     @Transactional
     public Listing createListing(ListingRequest request, List<MultipartFile> files, String userEmail) throws IOException {
         User seller = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+        if (files == null || files.size() < 3 || files.size() > 5) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Listings require between 3 and 5 images.");
+        }
+
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Image files cannot be empty.");
+            }
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "All uploaded files must be valid images.");
+            }
+        }
 
         Listing listing = Listing.builder()
                 .title(request.getTitle())
@@ -50,18 +66,14 @@ public class ListingService {
                 .status(ListingStatus.PENDING)
                 .build();
 
-        if (files != null && !files.isEmpty()) {
-            for (MultipartFile file : files) {
-                if (!file.isEmpty()) {
-                    Map<String, Object> uploadResult = cloudinaryService.upload(file);
-                    ListingImage listingImage = ListingImage.builder()
-                            .imageUrl(uploadResult.get("secure_url").toString())
-                            .cloudinaryPublicId(uploadResult.get("public_id").toString())
-                            .listing(listing)
-                            .build();
-                    listing.getImages().add(listingImage);
-                }
-            }
+        for (MultipartFile file : files) {
+            Map<String, Object> uploadResult = cloudinaryService.upload(file);
+            ListingImage listingImage = ListingImage.builder()
+                    .imageUrl(uploadResult.get("secure_url").toString())
+                    .cloudinaryPublicId(uploadResult.get("public_id").toString())
+                    .listing(listing)
+                    .build();
+            listing.getImages().add(listingImage);
         }
 
         return listingRepository.save(listing);
@@ -139,7 +151,7 @@ public class ListingService {
     @Transactional(readOnly = true)
     public Listing getListingById(Long id) {
         return listingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Listing not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
     }
 
     @Transactional(readOnly = true)
@@ -151,11 +163,11 @@ public class ListingService {
     public void updateStatus(Long id, String userEmail, ListingStatus status) {
         Listing listing = getListingById(id);
         if (!listing.getSeller().getEmail().equals(userEmail)) {
-            throw new RuntimeException("Unauthorized");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized: You do not own this listing");
         }
         
         if (listing.getStatus() == ListingStatus.PENDING && status == ListingStatus.ACTIVE) {
-            throw new RuntimeException("Cannot bypass admin approval");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot bypass admin approval");
         }
         
         listing.setStatus(status);
@@ -166,7 +178,7 @@ public class ListingService {
     public void deleteListing(Long id, String userEmail) {
         Listing listing = getListingById(id);
         if (!listing.getSeller().getEmail().equals(userEmail)) {
-            throw new RuntimeException("Unauthorized");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized: You do not own this listing");
         }
         listing.setStatus(ListingStatus.DELETED);
         listingRepository.save(listing);

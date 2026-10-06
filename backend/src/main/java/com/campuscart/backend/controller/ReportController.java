@@ -5,6 +5,7 @@ import com.campuscart.backend.model.Report;
 import com.campuscart.backend.model.User;
 import com.campuscart.backend.repository.ReportRepository;
 import com.campuscart.backend.repository.UserRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class ReportController {
 
     @PostMapping
     public ResponseEntity<Report> submitReport(
-            @RequestBody ReportRequest request,
+            @Valid @RequestBody ReportRequest request,
             @AuthenticationPrincipal String email) {
         
         User user = userRepository.findByEmail(email)

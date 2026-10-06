@@ -48,10 +48,15 @@ public class AdminController {
             @RequestParam String status,
             @AuthenticationPrincipal String email) {
         requireAdmin(email);
+
+        String newStatus = status != null ? status.trim().toUpperCase() : "";
+        if (!"RESOLVED".equals(newStatus) && !"DISMISSED".equals(newStatus)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status must be either RESOLVED or DISMISSED");
+        }
+
         Report report = reportRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found"));
         
-        String newStatus = status.toUpperCase();
         report.setStatus(newStatus);
         
         if ("RESOLVED".equals(newStatus) && "LISTING".equals(report.getTargetType())) {
@@ -78,7 +83,7 @@ public class AdminController {
             @AuthenticationPrincipal String email) {
         requireAdmin(email);
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         user.setBanned(!user.isBanned());
         return ResponseEntity.ok(userRepository.save(user));
     }
@@ -97,7 +102,7 @@ public class AdminController {
             @AuthenticationPrincipal String email) {
         requireAdmin(email);
         Listing listing = listingRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
         listing.setStatus(ListingStatus.ACTIVE);
         return ResponseEntity.ok(listingRepository.save(listing));
     }
@@ -108,7 +113,7 @@ public class AdminController {
             @AuthenticationPrincipal String email) {
         requireAdmin(email);
         Listing listing = listingRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
         listing.setStatus(ListingStatus.DELETED);
         return ResponseEntity.ok(listingRepository.save(listing));
     }
