@@ -21,7 +21,14 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
         String errorMessage = exception.getLocalizedMessage();
-        String targetUrl = frontendUrl + "/login";
+        String baseUrl = frontendUrl != null ? frontendUrl.trim() : "http://localhost:5173";
+        if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+            baseUrl = "https://" + baseUrl;
+        }
+        if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+        String targetUrl = baseUrl + "/login";
 
         // Check if this was a mobile or admin app login request
         if (request.getCookies() != null) {

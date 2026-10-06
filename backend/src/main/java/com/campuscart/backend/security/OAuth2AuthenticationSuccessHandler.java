@@ -31,15 +31,23 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
         
+        String baseUrl = frontendUrl != null ? frontendUrl.trim() : "http://localhost:5173";
+        if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+            baseUrl = "https://" + baseUrl;
+        }
+        if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+
         User user = userRepository.findByEmail(email).orElse(null);
         if (user != null && user.isBanned()) {
-            getRedirectStrategy().sendRedirect(request, response, frontendUrl + "/login?error=suspended");
+            getRedirectStrategy().sendRedirect(request, response, baseUrl + "/login?error=suspended");
             return;
         }
         
         String token = tokenProvider.generateToken(email);
 
-        String targetUrl = frontendUrl + "/login"; // Default Web App URL
+        String targetUrl = baseUrl + "/login"; // Default Web App URL
         
         // Check if this was a mobile login request
         if (request.getCookies() != null) {
