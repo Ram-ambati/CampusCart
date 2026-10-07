@@ -12,12 +12,18 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class HealthService {
 
     private final HeartbeatRepository heartbeatRepository;
+
+    @Autowired(required = false)
+    private RedisConnectionFactory redisConnectionFactory;
 
     @Transactional
     public Map<String, Object> pingDatabase() {
@@ -37,9 +43,20 @@ public class HealthService {
             heartbeat = heartbeatRepository.findById(1).orElse(null);
         }
 
+        String redisStatus = "NOT_CONFIGURED";
+        if (redisConnectionFactory != null) {
+            try {
+                redisConnectionFactory.getConnection().ping();
+                redisStatus = "CONNECTED";
+            } catch (Exception e) {
+                redisStatus = "UNAVAILABLE";
+            }
+        }
+
         Map<String, Object> result = new HashMap<>();
         result.put("status", "UP");
         result.put("database", "CONNECTED");
+        result.put("redis", redisStatus);
         result.put("lastPingAt", heartbeat != null ? heartbeat.getLastPingAt() : now);
         result.put("pingCount", heartbeat != null ? heartbeat.getPingCount() : 1L);
         result.put("serverTime", now);
