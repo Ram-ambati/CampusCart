@@ -55,9 +55,8 @@ export default function Login() {
     if (isRedirecting) return;
     setIsRedirecting(true);
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-    // set cookie for redirect
-    document.cookie = `mobile_redirect_uri=${encodeURIComponent(`${window.location.origin}/login`)}; path=/`;
-    window.location.href = `${API_URL}/oauth2/authorization/google`;
+    const redirectUri = encodeURIComponent(`${window.location.origin}/login`);
+    window.location.href = `${API_URL}/api/auth/mobile-login?redirect_uri=${redirectUri}`;
   };
 
   return (

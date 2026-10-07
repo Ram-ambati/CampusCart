@@ -34,8 +34,16 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         if (request.getCookies() != null) {
             for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
                 if ("mobile_redirect_uri".equals(cookie.getName())) {
-                    targetUrl = java.net.URLDecoder.decode(cookie.getValue(), java.nio.charset.StandardCharsets.UTF_8);
-                    // Clear the cookie
+                    targetUrl = java.net.URLDecoder.decode(cookie.getValue(), java.nio.charset.StandardCharsets.UTF_8).trim();
+                    boolean isHttps = request.isSecure() || "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
+                    org.springframework.http.ResponseCookie clearCookie = org.springframework.http.ResponseCookie
+                            .from("mobile_redirect_uri", "")
+                            .path("/")
+                            .maxAge(0)
+                            .sameSite("Lax")
+                            .secure(isHttps)
+                            .build();
+                    response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, clearCookie.toString());
                     cookie.setMaxAge(0);
                     cookie.setPath("/");
                     response.addCookie(cookie);
