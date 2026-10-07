@@ -49,13 +49,18 @@ public class AuthController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (user.isOnboardingCompleted()) {
-            return ResponseEntity.badRequest().build(); // Already onboarded
+            return ResponseEntity.ok(user); // Idempotent: already onboarded
         }
 
-        user.setPreferredName(request.getPreferredName());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setBranch(request.getBranch());
-        user.setAcademicYear(request.getAcademicYear());
+        String phone = request.getPhoneNumber().replaceAll("[\\s-]", "");
+        if (phone.startsWith("+91")) {
+            phone = phone.substring(3);
+        }
+
+        user.setPreferredName(request.getPreferredName().trim());
+        user.setPhoneNumber(phone);
+        user.setBranch(request.getBranch().trim());
+        user.setAcademicYear(request.getAcademicYear().trim());
         user.setOnboardingCompleted(true);
 
         User updatedUser = userRepository.save(user);

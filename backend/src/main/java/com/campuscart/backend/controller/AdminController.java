@@ -26,12 +26,13 @@ public class AdminController {
     private final ReportRepository reportRepository;
     private final ListingRepository listingRepository;
 
-    private void requireAdmin(String email) {
+    private User requireAdmin(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         if (user.getRole() != Role.ADMIN) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: Admins Only");
         }
+        return user;
     }
 
     // --- Reports ---
@@ -81,11 +82,20 @@ public class AdminController {
     public ResponseEntity<User> toggleBan(
             @PathVariable Long id,
             @AuthenticationPrincipal String email) {
-        requireAdmin(email);
-        User user = userRepository.findById(id)
+        User admin = requireAdmin(email);
+        User targetUser = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        user.setBanned(!user.isBanned());
-        return ResponseEntity.ok(userRepository.save(user));
+
+        if (targetUser.getId().equals(admin.getId()) || targetUser.getEmail().equalsIgnoreCase(email)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot ban your own administrator account");
+        }
+
+        if (targetUser.getRole() == Role.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Administrators cannot be banned");
+        }
+
+        targetUser.setBanned(!targetUser.isBanned());
+        return ResponseEntity.ok(userRepository.save(targetUser));
     }
 
     // --- Listings Approvals ---

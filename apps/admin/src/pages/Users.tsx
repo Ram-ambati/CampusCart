@@ -1,10 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Ban, CheckCircle } from 'lucide-react';
+import { Ban, CheckCircle, Shield } from 'lucide-react';
 
 export default function Users() {
   const queryClient = useQueryClient();
   const token = localStorage.getItem('jwt');
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+  // Fetch current admin user to identify self
+  const { data: currentUser } = useQuery({
+    queryKey: ['admin-current-user'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) return null;
+      return res.json();
+    }
+  });
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
@@ -23,16 +35,30 @@ export default function Users() {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!res.ok) throw new Error('Failed to toggle ban');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to toggle ban');
+      }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
+    onError: (err: any) => {
+      alert(err.message || 'Operation failed');
+    }
   });
 
   if (isLoading) return <div className="p-8 text-center text-slate-500 font-medium">Loading users...</div>;
 
   return (
     <div>
-      <h1 className="text-3xl font-black text-slate-900 mb-8">User Management</h1>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">User Management</h1>
+          <p className="text-sm text-slate-500 mt-1">Manage student accounts, view campus roles, and enforce moderation.</p>
+        </div>
+        <div className="bg-slate-100 px-4 py-2 rounded-xl text-xs font-bold text-slate-600">
+          Total Users: {users.length}
+        </div>
+      </div>
       
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
@@ -41,6 +67,7 @@ export default function Users() {
               <th className="p-4 font-bold text-slate-700">Real Name</th>
               <th className="p-4 font-bold text-slate-700">Roll No</th>
               <th className="p-4 font-bold text-slate-700">Email</th>
+              <th className="p-4 font-bold text-slate-700">Role</th>
               <th className="p-4 font-bold text-slate-700">Status</th>
               <th className="p-4 font-bold text-slate-700">Actions</th>
             </tr>
@@ -48,36 +75,65 @@ export default function Users() {
           <tbody>
             {users.map((user: any) => {
               const rollNo = user.email.split('@')[0].toUpperCase();
+              const isSelf = currentUser && (currentUser.id === user.id || currentUser.email === user.email);
+              const isAdmin = user.role === 'ADMIN';
+
               return (
-                <tr key={user.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                  <td className="p-4 font-medium text-slate-900">{user.realName || 'Unknown'}</td>
+                <tr key={user.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition">
+                  <td className="p-4 font-medium text-slate-900 flex items-center gap-2">
+                    <span>{user.realName || 'Unknown'}</span>
+                    {isSelf && (
+                      <span className="bg-indigo-100 text-indigo-700 text-[10px] font-extrabold px-1.5 py-0.5 rounded">
+                        YOU
+                      </span>
+                    )}
+                  </td>
                   <td className="p-4 text-slate-600 font-mono text-sm">{rollNo}</td>
                   <td className="p-4 text-slate-600">{user.email}</td>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded-md text-xs font-bold ${
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${
+                      isAdmin ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${
                       user.banned ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
                     }`}>
                       {user.banned ? 'BANNED' : 'ACTIVE'}
                     </span>
                   </td>
                   <td className="p-4">
-                    <button 
-                      onClick={() => toggleBan.mutate(user.id)}
-                      disabled={toggleBan.isPending && (toggleBan.variables as unknown as number) === user.id}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs active:scale-95 transition-all disabled:opacity-50 ${
-                        user.banned 
-                          ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' 
-                          : 'bg-red-50 text-red-600 hover:bg-red-100'
-                      }`}
-                    >
-                      {toggleBan.isPending && (toggleBan.variables as unknown as number) === user.id ? (
-                        <span>Updating...</span>
-                      ) : user.banned ? (
-                        <><CheckCircle className="w-3 h-3" /> Unban User</>
-                      ) : (
-                        <><Ban className="w-3 h-3" /> Ban User</>
-                      )}
-                    </button>
+                    {isAdmin ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 select-none">
+                        <Shield className="w-3.5 h-3.5 text-indigo-600" />
+                        Protected
+                      </span>
+                    ) : (
+                      <button 
+                        onClick={() => {
+                          const action = user.banned ? 'unban' : 'ban';
+                          if (window.confirm(`Are you sure you want to ${action} ${user.realName || user.email}?`)) {
+                            toggleBan.mutate(user.id);
+                          }
+                        }}
+                        disabled={toggleBan.isPending && (toggleBan.variables as unknown as number) === user.id}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-xs active:scale-95 transition-all disabled:opacity-50 ${
+                          user.banned 
+                            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200' 
+                            : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-100'
+                        }`}
+                      >
+                        {toggleBan.isPending && (toggleBan.variables as unknown as number) === user.id ? (
+                          <span>Updating...</span>
+                        ) : user.banned ? (
+                          <><CheckCircle className="w-3.5 h-3.5" /> Unban User</>
+                        ) : (
+                          <><Ban className="w-3.5 h-3.5" /> Ban User</>
+                        )}
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
