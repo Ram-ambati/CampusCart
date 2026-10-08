@@ -3,6 +3,7 @@ package com.campuscart.backend.security;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
@@ -10,17 +11,28 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 @Component
+@RequiredArgsConstructor
 public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
+
+    private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        String errorMessage = exception.getLocalizedMessage();
+        cookieAuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
+
+        String errorMessage = "Authentication failed";
+        if (exception != null) {
+            if (exception.getMessage() != null && !exception.getMessage().isBlank()) {
+                errorMessage = exception.getMessage();
+            } else if (exception.getLocalizedMessage() != null && !exception.getLocalizedMessage().isBlank()) {
+                errorMessage = exception.getLocalizedMessage();
+            }
+        }
+
         String baseUrl = frontendUrl != null ? frontendUrl.trim() : "http://localhost:5173";
         if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
             baseUrl = "https://" + baseUrl;
@@ -53,7 +65,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         }
 
         String finalUrl = UriComponentsBuilder.fromUriString(targetUrl)
-                .queryParam("error", URLEncoder.encode(errorMessage, StandardCharsets.UTF_8))
+                .queryParam("error", errorMessage)
                 .build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, finalUrl);

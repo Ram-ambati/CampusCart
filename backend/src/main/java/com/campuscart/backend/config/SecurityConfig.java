@@ -1,6 +1,7 @@
 package com.campuscart.backend.config;
 
 import com.campuscart.backend.security.CustomOAuth2UserService;
+import com.campuscart.backend.security.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.campuscart.backend.security.JwtAuthenticationFilter;
 import com.campuscart.backend.security.OAuth2AuthenticationFailureHandler;
 import com.campuscart.backend.security.OAuth2AuthenticationSuccessHandler;
@@ -21,6 +22,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler successHandler;
     private final OAuth2AuthenticationFailureHandler failureHandler;
@@ -37,6 +39,9 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
+                .authorizationEndpoint(authorization -> authorization
+                    .authorizationRequestRepository(cookieAuthorizationRequestRepository)
+                )
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                 .successHandler(successHandler)
                 .failureHandler(failureHandler)

@@ -22,14 +22,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtTokenProvider tokenProvider;
     private final UserRepository userRepository;
+    private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        cookieAuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
+
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        String email = oAuth2User.getAttribute("email");
+        String rawEmail = oAuth2User.getAttribute("email");
+        String email = rawEmail != null ? rawEmail.trim().toLowerCase() : "";
         
         String baseUrl = frontendUrl != null ? frontendUrl.trim() : "http://localhost:5173";
         if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
