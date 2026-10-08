@@ -30,6 +30,7 @@ public class User {
 
     private String preferredName; // Custom for the marketplace
 
+    @Column(length = 2048)
     private String avatarUrl;
 
     @Column(length = 500)
