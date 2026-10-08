@@ -5,7 +5,7 @@ import com.campuscart.backend.model.ChatMessage;
 import com.campuscart.backend.model.ChatSession;
 import com.campuscart.backend.service.ChatService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -20,13 +20,11 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/chat")
+@RequiredArgsConstructor
 public class ChatController {
 
-    @Autowired
-    private ChatService chatService;
-
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private final ChatService chatService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     // 1. Initialize or get a chat session for a listing
     @PostMapping("/session")

@@ -2,7 +2,7 @@ package com.campuscart.backend.controller;
 
 import com.campuscart.backend.model.Listing;
 import com.campuscart.backend.service.WishlistService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -11,10 +11,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/wishlist")
+@RequiredArgsConstructor
 public class WishlistController {
 
-    @Autowired
-    private WishlistService wishlistService;
+    private final WishlistService wishlistService;
 
     @PostMapping("/{listingId}")
     public ResponseEntity<Void> addToWishlist(@PathVariable Long listingId, @AuthenticationPrincipal String email) {

@@ -9,9 +9,9 @@ import com.campuscart.backend.repository.ChatMessageRepository;
 import com.campuscart.backend.repository.ChatSessionRepository;
 import com.campuscart.backend.repository.ListingRepository;
 import com.campuscart.backend.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -19,19 +19,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class ChatService {
 
-    @Autowired
-    private ChatSessionRepository chatSessionRepository;
-
-    @Autowired
-    private ChatMessageRepository chatMessageRepository;
-
-    @Autowired
-    private ListingRepository listingRepository;
-
-    @Autowired
-    private UserRepository userRepository;
+    private final ChatSessionRepository chatSessionRepository;
+    private final ChatMessageRepository chatMessageRepository;
+    private final ListingRepository listingRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public ChatSession getOrCreateSession(Long listingId, String buyerEmail) {

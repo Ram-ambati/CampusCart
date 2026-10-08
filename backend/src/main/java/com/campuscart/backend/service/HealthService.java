@@ -2,7 +2,6 @@ package com.campuscart.backend.service;
 
 import com.campuscart.backend.model.Heartbeat;
 import com.campuscart.backend.repository.HeartbeatRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,14 +15,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class HealthService {
 
     private final HeartbeatRepository heartbeatRepository;
+    private final RedisConnectionFactory redisConnectionFactory;
 
-    @Autowired(required = false)
-    private RedisConnectionFactory redisConnectionFactory;
+    public HealthService(HeartbeatRepository heartbeatRepository,
+                         @Autowired(required = false) RedisConnectionFactory redisConnectionFactory) {
+        this.heartbeatRepository = heartbeatRepository;
+        this.redisConnectionFactory = redisConnectionFactory;
+    }
 
     @Transactional
     public Map<String, Object> pingDatabase() {

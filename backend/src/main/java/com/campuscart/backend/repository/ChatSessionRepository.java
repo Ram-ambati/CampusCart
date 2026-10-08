@@ -4,12 +4,10 @@ import com.campuscart.backend.model.ChatSession;
 import com.campuscart.backend.model.Listing;
 import com.campuscart.backend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-@Repository
 public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> {
     
     // Find all sessions where the user is either the buyer or the seller

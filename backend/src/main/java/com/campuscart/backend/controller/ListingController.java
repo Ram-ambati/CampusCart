@@ -5,7 +5,7 @@ import com.campuscart.backend.model.Category;
 import com.campuscart.backend.model.Listing;
 import com.campuscart.backend.service.ListingService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,10 +20,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/listings")
+@RequiredArgsConstructor
 public class ListingController {
 
-    @Autowired
-    private ListingService listingService;
+    private final ListingService listingService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Listing> createListing(
